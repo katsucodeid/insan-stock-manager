@@ -108,6 +108,23 @@ Box isi 5 luar : ${fmt(s.box5outer)}pcs
 Box isi 5 dalam : ${fmt(s.box5inner)}pcs
 Kertas Minyak: ${fmt(s.paper)}pcs
 Mika roti roll : ${fmt(s.mika)}pcs`;}
+function generateFullStockReport(){
+const source=$("stockOpnameInput").value;
+if(!source.trim()){ $("stockOpnameMsg").textContent="Tempel pesan stock opname terlebih dahulu."; return; }
+const section=/\\*INSAN\\*:[\\s\\S]*?(?=\\n(?:_{5,}|-{5,})|$)/i;
+if(!section.test(source)){ $("stockOpnameMsg").textContent="Bagian *INSAN* tidak ditemukan. Pastikan pesan memiliki judul *INSAN*:. Tidak ada teks yang diubah."; return; }
+const s=state?.stock;
+if(!s){ $("stockOpnameMsg").textContent="Data stok belum tersedia. Hubungkan ke server lalu perbarui data."; return; }
+const fmt=n=>Number(n||0).toLocaleString("id-ID");
+const replacement=`*INSAN*:
+Box isi 3 : ${fmt(s.box3)}pcs
+Box isi 5 luar : ${fmt(s.box5outer)}pcs
+Box isi 5 dalam : ${fmt(s.box5inner)}pcs
+Kertas Minyak: ${fmt(s.paper)}pcs
+Mika roti roll : ${fmt(s.mika)}pcs`;
+$("reportText").value=source.replace(section,replacement);
+$("stockOpnameMsg").textContent="Berhasil! Hanya bagian *INSAN* yang diperbarui menggunakan stok terbaru dari database.";
+}
 async function copyReport(){try{await navigator.clipboard.writeText($("reportText").value);alert("Laporan disalin.");}catch{$("reportText").select();document.execCommand("copy");alert("Laporan disalin.");}}
 themeInit();
 $("prodDate").value=new Date().toISOString().slice(0,10);
