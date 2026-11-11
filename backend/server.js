@@ -5,12 +5,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
+const { spawn, execFileSync } = require("child_process");
 
 const app = express();
 const PORT = Number(process.env.PORT || 8787);
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "data.json");
 const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
+const REPO_DIR = path.resolve(__dirname, "..");
+const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/termux-install.sh."); process.exit(1); }
 app.use(cors());
@@ -42,7 +45,7 @@ async function locked(fn) {
   return run;
 }
 function snapshot(user) {
-  return { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-30).reverse(), user: user ? { username: user.username, role: user.role } : null };
+  return { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(), user: user ? { username: user.username, role: user.role } : null };
 }
 function auth(req, res, next) {
   try {
@@ -62,7 +65,7 @@ function int(value, label) {
 }
 function operationChanges(op) {
   const p = op.payload || {};
-  if (op.type === "stock-in") {
+  if (op.type === "stock-out") {\n    if (!Object.hasOwn(itemDefs, p.item)) throw new Error("Barang tidak dikenal.");\n    const quantity = int(p.quantity, "Jumlah pengurangan");\n    if (quantity <= 0) throw new Error("Jumlah pengurangan harus lebih dari nol.");\n    const note = String(p.note || "").trim();\n    if (!note) throw new Error("Alasan pengurangan wajib diisi.");\n    return { changes: { [p.item]: -quantity }, lines: { item: p.item, quantity, reason: note }, date: p.date, note, location: "" };\n  }\n  if (op.type === "stock-in") {
     if (!Object.hasOwn(itemDefs, p.item)) throw new Error("Barang tidak dikenal.");
     const packs = int(p.packs ?? 0, "Jumlah pack");
     const perPack = int(p.perPack ?? 0, "Isi per pack");
@@ -87,7 +90,7 @@ function operationChanges(op) {
       const use = total * 2;
       changes = { box3: -use, box5outer: -use, box5inner: -use, paper: -use };
     }
-    return { changes, lines: { ori, beef, spicy, total, custom: p.custom || null }, date: p.date, note: p.note || "", location: p.location || "-" };
+    if (!OUTLETS.includes(p.location)) throw new Error("Pilih salah satu outlet yang tersedia.");\n    const requestNote = String(p.requestNote || "").trim();\n    if (p.custom?.enabled && !requestNote) throw new Error("Keterangan request khusus wajib diisi.");\n    return { changes, lines: { ori, beef, spicy, cheese, total, custom: p.custom || null, requestNote }, date: p.date, note: p.note || "", location: p.location };
   }
   throw new Error("Jenis transaksi tidak dikenal.");
 }
@@ -150,6 +153,24 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
     });
     res.json(result);
   } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.get("/api/update/check", auth, async (req, res) => {
+  try {
+    const current = execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_DIR, encoding: "utf8" }).trim();
+    const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits/main", { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
+    if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
+    const latest = await response.json();
+    res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
+  } catch (e) { res.status(503).json({ error: e.message || "Gagal memeriksa pembaruan." }); }
+});
+app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
+  try {
+    const script = path.join(REPO_DIR, "scripts", "update-termux.sh");
+    if (!fs.existsSync(script)) throw new Error("Skrip pembaruan tidak ditemukan. Perbarui repository secara manual.");
+    const child = spawn("bash", [script, String(process.pid)], { cwd: REPO_DIR, detached: true, stdio: "ignore" });
+    child.unref();
+    res.json({ ok: true, message: "Pembaruan dimulai. Server akan berhenti sebentar dan hidup kembali otomatis." });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.get("/api/report", auth, (req, res) => {
   const s = db.stock, fmt = n => Number(n || 0).toLocaleString("id-ID");
