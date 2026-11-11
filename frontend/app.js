@@ -63,17 +63,11 @@ async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d
 async function applyUpdate(){if(!window.insanUpdateAvailable)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Perbarui aplikasi dari GitHub sekarang? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const r=await fetch(API+"/api/health",{cache:"no-store"});if(r.ok){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=90)clearInterval(watcher);},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
 async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
 async function loadReport(){if(!state)return;const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");$("reportText").value=`*INSAN*:
-Box isi 3 : ${fmt(s.box3)} pcs
-Box isi 5 luar (Slongsong) : ${fmt(s.box5outer)} pcs
-Box isi 5 dalam (Tatakan Polos) : ${fmt(s.box5inner)} pcs
-Kertas Minyak : ${fmt(s.paper)} pcs
-Mika roti roll : ${fmt(s.mika)} pcs
-
-_________________
-Note‼️
-Batas minimum stok: Belum ditentukan
-Stok awal tanggung jawab: 11 November 2026
-____________`;}
+Box isi 3 : ${fmt(s.box3)}pcs
+Box isi 5 luar : ${fmt(s.box5outer)}pcs
+Box isi 5 dalam : ${fmt(s.box5inner)}pcs
+Kertas Minyak: ${fmt(s.paper)}pcs
+Mika roti roll : ${fmt(s.mika)}pcs`;}
 async function copyReport(){try{await navigator.clipboard.writeText($("reportText").value);alert("Laporan disalin.");}catch{$("reportText").select();document.execCommand("copy");alert("Laporan disalin.");}}
 themeInit();
 $("prodDate").value=new Date().toISOString().slice(0,10);
