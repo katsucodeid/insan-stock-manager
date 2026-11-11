@@ -45,6 +45,16 @@ for(const [k,d] of Object.entries(changes))state.stock[k]+=d;
 state.history.unshift({id:op.id,type:op.type,date:p.date||new Date().toISOString().slice(0,10),location:p.location||"",lines:op.type==="stock-in"?{item:p.item,packs:p.packs,perPack:p.perPack,extra:p.extra}:p,changes,createdBy:cachedUser?.username||"offline",createdAt:new Date().toISOString()});state.history=state.history.slice(0,30);}
 async function submitOperation(type,payload,msgId){const op={id:newId(),type,payload};try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:[op]})});if(d.rejected?.length){const rejected=new Error(d.rejected[0].error);rejected.status=409;throw rejected;}state=d.state;await kvSet("state",state);$(msgId).textContent="Tersimpan dan tersinkron ke server.";}catch(e){if(!(e instanceof TypeError)&&navigator.onLine&&e.status&&e.status<500)throw e;applyLocal(op);await queueAdd(op);await kvSet("state",state);$(msgId).textContent="Disimpan offline di perangkat. Akan dikirim saat tersambung.";}await renderAll();}
 async function stockIn(){try{await submitOperation("stock-in",{item:$("inItem").value,packs:+$("packs").value,perPack:+$("perPack").value,extra:+$("extra").value,note:$("inNote").value},"inMsg");}catch(e){$("inMsg").textContent=e.message;}}
+function productionPreview(){
+const total=["ori","beef","spicy"].reduce((sum,id)=>sum+Math.max(0,Number($(id).value)||0),0);
+const special=$("customEnabled").checked;
+const box3=special?(Number($("cBox3").value)||0):total*2;
+const box5=special?(Number($("cBox5").value)||0):total*2;
+const paper=special?(Number($("cPaper").value)||0):total*2;
+$("productionPreview").textContent=total>0?"Perkiraan pengurangan stok untuk "+total+" loyang: Box isi 3 "+box3+" pcs; Box isi 5 luar "+box5+" pcs; Box isi 5 dalam "+box5+" pcs; Kertas minyak "+paper+" pcs. Periksa kembali sebelum menyimpan.":"Isi jumlah loyang untuk melihat perkiraan pengurangan stok.";
+}
+["ori","beef","spicy","cBox3","cBox5","cPaper","customEnabled"].forEach(id=>$(id).addEventListener("input",productionPreview));
+$("customEnabled").addEventListener("change",productionPreview);
 async function production(){try{await submitOperation("production",{date:$("prodDate").value,location:$("location").value,ori:+$("ori").value,beef:+$("beef").value,spicy:+$("spicy").value,custom:$("customEnabled").checked?{enabled:true,box3:+$("cBox3").value,box5:+$("cBox5").value,paper:+$("cPaper").value}:null,note:$("prodNote").value},"prodMsg");}catch(e){$("prodMsg").textContent=e.message;}}
 async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
 async function loadReport(){if(!state)return;const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");$("reportText").value=`*INSAN*:
