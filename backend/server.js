@@ -210,6 +210,8 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   res.json({ ok: true, username, role });
 });
 
+// Serve repository-level logo and image assets from /img/*.
+app.use("/img", express.static(path.join(REPO_DIR, "img"), { fallthrough: false, maxAge: "7d" }));
 app.use(express.static(FRONTEND_DIR, { extensions: ["html"] }));
 app.get("*", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "index.html")));
 
