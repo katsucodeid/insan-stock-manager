@@ -32,7 +32,13 @@ git clone https://github.com/katsucodeid/insan-stock-manager.git
 cd insan-stock-manager
 bash scripts/install-termux.sh
 ```
-Simpan kredensial admin yang muncul. Jalankan server:
+Simpan kredensial admin yang muncul. Jika lupa password atau gagal login, hentikan server dengan Ctrl+C lalu jalankan pemulihan akun admin tanpa menghapus data:
+```bash
+bash scripts/reset-admin-password.sh
+```
+Skrip hanya memperbarui password akun admin yang dipilih atau menambahkan akun admin jika belum ada; stok dan transaksi tetap dipertahankan.
+
+Jalankan server:
 ```bash
 bash scripts/start-termux.sh
 ```
