@@ -91,21 +91,25 @@ function operationChanges(op) {
     const beef = int(p.beef ?? 0, "Beef");
     const spicy = int(p.spicy ?? 0, "Spicy");
     const cheese = int(p.cheese ?? 0, "Cheese");
+    const quantities = { ori, beef, spicy, cheese };
     const total = ori + beef + spicy + cheese;
     if (!Number.isSafeInteger(total) || total <= 0) throw new Error("Jumlah loyang harus lebih dari nol.");
-    let changes;
-    if (p.custom && p.custom.enabled) {
-      const box3 = int(p.custom.box3 ?? 0, "Box isi 3 khusus");
-      const box5 = int(p.custom.box5 ?? 0, "Box isi 5 khusus");
-      changes = { box3: -box3, box5outer: -box5, box5inner: -box5, paper: -box5 };
-    } else {
-      const use = total * 2;
-      changes = { box3: -use, box5outer: -use, box5inner: -use, paper: -use };
+    const packaging = {};
+    const changes = { box3: 0, box5outer: 0, box5inner: 0, paper: 0 };
+    for (const [variant, quantity] of Object.entries(quantities)) {
+      const custom = p.packagingByVariant?.[variant];
+      const box3 = custom?.enabled ? int(custom.box3 ?? 0, "Box isi 3 " + variant) : quantity * 2;
+      const box5 = custom?.enabled ? int(custom.box5 ?? 0, "Box isi 5 " + variant) : quantity * 2;
+      if (!Number.isSafeInteger(box3) || !Number.isSafeInteger(box5)) throw new Error("Jumlah kemasan terlalu besar.");
+      packaging[variant] = { enabled: !!custom?.enabled, box3, box5 };
+      changes.box3 -= box3;
+      changes.box5outer -= box5;
+      changes.box5inner -= box5;
+      changes.paper -= box5;
     }
     if (!OUTLETS.includes(p.location)) throw new Error("Pilih salah satu outlet yang tersedia.");
     const requestNote = String(p.requestNote || "").trim();
-    if (p.custom?.enabled && !requestNote) throw new Error("Keterangan request khusus wajib diisi.");
-    return { changes, lines: { ori, beef, spicy, cheese, total, custom: p.custom || null, requestNote }, date: p.date, note: p.note || "", location: p.location };
+    return { changes, lines: { ori, beef, spicy, cheese, total, packagingByVariant: packaging, requestNote }, date: p.date, note: p.note || "", location: p.location };
   }
   throw new Error("Jenis transaksi tidak dikenal.");
 }
