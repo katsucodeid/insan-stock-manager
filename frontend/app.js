@@ -42,12 +42,13 @@ root.appendChild(card);});
 if(!list.length)root.textContent="Belum ada riwayat pada filter ini.";
 }
 async function deleteTransaction(id){if(!id||!confirm("Yakin menghapus transaksi ini? Stok akan dikembalikan otomatis. Tindakan ini tidak dapat dibatalkan."))return;try{const d=await api("/transactions/"+encodeURIComponent(id),{method:"DELETE"});state=d.state;await kvSet("state",state);await renderAll();$("syncErrors").textContent="Transaksi dihapus; perubahan stok sudah dibatalkan.";showTab("history");}catch(e){alert("Gagal menghapus transaksi: "+e.message);}}
-function applyLocal(op){const p=op.payload;let changes={};if(op.type==="stock-in"){const total=(p.packs||0)*(p.perPack||0)+(p.extra||0);changes[p.item]=total;}else if(op.type==="stock-out"){changes[p.item]=-(p.quantity||0);}else{const total=(p.ori||0)+(p.beef||0)+(p.spicy||0)+(p.cheese||0);if(p.custom?.enabled){changes={box3:-(p.custom.box3||0),box5outer:-(p.custom.box5||0),box5inner:-(p.custom.box5||0),paper:-(p.custom.paper||0)};}else{const use=total*2;changes={box3:-use,box5outer:-use,box5inner:-use,paper:-use};}}
+function applyLocal(op){const p=op.payload;let changes={};if(op.type==="stock-in"){const total=(p.packs||0)*(p.perPack||0)+(p.extra||0);changes[p.item]=total;}else if(op.type==="stock-out"){changes[p.item]=-(p.quantity||0);}else{const total=(p.ori||0)+(p.beef||0)+(p.spicy||0)+(p.cheese||0);if(p.custom?.enabled){changes={box3:-(p.custom.box3||0),box5outer:-(p.custom.box5||0),box5inner:-(p.custom.box5||0),paper:-(p.custom.box5||0)};}else{const use=total*2;changes={box3:-use,box5outer:-use,box5inner:-use,paper:-use};}}
 for(const [k,d] of Object.entries(changes)){if(!Number.isSafeInteger(d)||!Number.isSafeInteger(state.stock[k]+d)||state.stock[k]+d<0)throw Error("Stok lokal "+k+" tidak mencukupi.");}
 for(const [k,d] of Object.entries(changes))state.stock[k]+=d;
 state.history.unshift({id:op.id,type:op.type,date:p.date||new Date().toISOString().slice(0,10),location:p.location||"",lines:op.type==="stock-in"?{item:p.item,packs:p.packs,perPack:p.perPack,extra:p.extra}:p,changes,createdBy:cachedUser?.username||"offline",createdAt:new Date().toISOString()});state.history=state.history.slice(0,30);}
 async function submitOperation(type,payload,msgId){const op={id:newId(),type,payload};try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:[op]})});if(d.rejected?.length){const rejected=new Error(d.rejected[0].error);rejected.status=409;throw rejected;}state=d.state;await kvSet("state",state);$(msgId).textContent="Tersimpan dan tersinkron ke server.";}catch(e){if(!(e instanceof TypeError)&&navigator.onLine&&e.status&&e.status<500)throw e;applyLocal(op);await queueAdd(op);await kvSet("state",state);$(msgId).textContent="Disimpan offline di perangkat. Akan dikirim saat tersambung.";}await renderAll();}
 async function stockIn(){try{await submitOperation("stock-in",{item:$("inItem").value,packs:+$("packs").value,perPack:+$("perPack").value,extra:+$("extra").value,note:$("inNote").value},"inMsg");}catch(e){$("inMsg").textContent=e.message;}}
+let editingTargetId=null;
 function productionPreview(){
 const variants=[["Ori","ori"],["Beef","beef"],["Spicy","spicy"],["Cheese","cheese"]];
 const total=variants.reduce((sum,[,id])=>sum+Math.max(0,Number($(id).value)||0),0);
@@ -55,24 +56,66 @@ const breakdown=variants.filter(([,id])=>Number($(id).value)>0).map(([name,id])=
 const special=$("customEnabled").checked;
 const box3=special?(Number($("cBox3").value)||0):total*2;
 const box5=special?(Number($("cBox5").value)||0):total*2;
-const paper=special?(Number($("cPaper").value)||0):total*2;
 $("productionPreview").innerHTML="";
 const summary=document.createElement("div");summary.className="production-total";
 const label=document.createElement("span");label.textContent="Total seluruh loyang";
 const value=document.createElement("strong");value.textContent=total.toLocaleString("id-ID")+" loyang";
 summary.append(label,value);$("productionPreview").appendChild(summary);
 const detail=document.createElement("p");detail.className="muted";detail.textContent=total?breakdown:"Masukkan jumlah loyang pada varian di atas."; $("productionPreview").appendChild(detail);
-const stock=document.createElement("p");stock.className="muted";stock.textContent=total?"Perkiraan pengurangan: Box isi 3 "+box3+" pcs · Box isi 5 luar "+box5+" pcs · Box isi 5 dalam "+box5+" pcs · Kertas minyak "+paper+" pcs.": "Pengurangan stok akan dihitung setelah jumlah loyang diisi."; $("productionPreview").appendChild(stock);
+const stock=document.createElement("p");stock.className="muted";stock.textContent=total?"Perkiraan pengurangan: Box isi 3 "+box3+" pcs · Box isi 5 luar "+box5+" pcs · Box isi 5 dalam "+box5+" pcs · Kertas minyak "+box5+" pcs.": "Pengurangan stok akan dihitung setelah jumlah loyang diisi."; $("productionPreview").appendChild(stock);
 }
-["ori","beef","spicy","cheese","cBox3","cBox5","cPaper","customEnabled"].forEach(id=>$(id).addEventListener("input",productionPreview));
+["ori","beef","spicy","cheese","cBox3","cBox5","customEnabled"].forEach(id=>$(id).addEventListener("input",productionPreview));
 $("customEnabled").addEventListener("change",()=>{$("requestNoteWrap").classList.toggle("hidden",!$("customEnabled").checked);productionPreview();});
-$("prodDate").addEventListener("change",renderDailyTargets);
-async function production(){try{const ids=["ori","beef","spicy","cheese"];const values=ids.map(id=>Number($(id).value));if(values.some(v=>!Number.isSafeInteger(v)||v<0)||values.reduce((x,y)=>x+y,0)<=0)throw Error("Isi setidaknya satu jumlah loyang dengan bilangan bulat nol atau lebih.");if(!$("location").value)throw Error("Pilih outlet terlebih dahulu.");if(!$("prodDate").value)throw Error("Tanggal target wajib dipilih.");const custom=$("customEnabled").checked;if(custom&&!$("requestNote").value.trim())throw Error("Keterangan request khusus wajib diisi.");await submitOperation("production",{date:$("prodDate").value,location:$("location").value,ori:values[0],beef:values[1],spicy:values[2],cheese:values[3],custom:custom?{enabled:true,box3:+$("cBox3").value,box5:+$("cBox5").value,paper:+$("cPaper").value}:null,requestNote:custom?$("requestNote").value.trim():"",note:$("prodNote").value},"prodMsg");renderDailyTargets();ids.forEach(id=>$(id).value=0);$("location").value="";$("customEnabled").checked=false;$("customFields").classList.add("hidden");$("requestNoteWrap").classList.add("hidden");$("requestNote").value="";["cBox3","cBox5","cPaper"].forEach(id=>$(id).value=0);productionPreview();renderDailyTargets();}catch(e){$("prodMsg").textContent=e.message;}}
+$("prodDate").addEventListener("change",()=>{renderDailyTargets();renderTargetSource();});
+function renderTargetSource(){
+const select=$("targetSource");if(!select||!state)return;
+const previous=select.value,date=$("prodDate").value;
+const rows=(state.history||[]).filter(x=>x.type==="production"&&x.date===date);
+select.innerHTML='<option value="">Pilih target tanggal ini</option>';
+rows.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=(x.location||"Outlet")+" · "+(x.lines?.total||0)+" loyang · "+(x.lines?.ori||0)+" Ori / "+(x.lines?.beef||0)+" Beef / "+(x.lines?.spicy||0)+" Spicy / "+(x.lines?.cheese||0)+" Cheese";select.appendChild(o);});
+if(rows.some(x=>x.id===previous))select.value=previous;
+}
+function loadTargetForRequest(){
+const id=$("targetSource").value;
+const tx=(state?.history||[]).find(x=>x.id===id&&x.type==="production");
+if(!tx){$("editTargetMsg").textContent="Pilih target produksi yang tersedia.";return;}
+const l=tx.lines||{};
+$("prodDate").value=tx.date||$("prodDate").value;$("location").value=tx.location||"";
+["ori","beef","spicy","cheese"].forEach(k=>$(k).value=Number(l[k]||0));
+const custom=!!l.custom?.enabled;
+$("customEnabled").checked=custom;$("customFields").classList.toggle("hidden",!custom);$("requestNoteWrap").classList.toggle("hidden",!custom);
+$("cBox3").value=Number(l.custom?.box3||0);$("cBox5").value=Number(l.custom?.box5||0);
+$("requestNote").value=l.requestNote||"";$("prodNote").value=tx.note||"";
+editingTargetId=tx.id;$("prodSubmit").textContent="Simpan perubahan target";
+$("editTargetMsg").textContent="Mode edit aktif: "+(tx.location||"Outlet")+" · perubahan akan menghitung selisih stok dari transaksi lama.";
+productionPreview();renderDailyTargets();
+}
+async function production(){
+try{
+const ids=["ori","beef","spicy","cheese"],values=ids.map(id=>Number($(id).value));
+if(values.some(v=>!Number.isSafeInteger(v)||v<0)||values.reduce((x,y)=>x+y,0)<=0)throw Error("Isi setidaknya satu jumlah loyang dengan bilangan bulat nol atau lebih.");
+if(!$("location").value)throw Error("Pilih outlet terlebih dahulu.");
+if(!$("prodDate").value)throw Error("Tanggal target wajib dipilih.");
+const custom=$("customEnabled").checked;
+if(custom&&!$("requestNote").value.trim())throw Error("Keterangan request khusus wajib diisi.");
+const payload={date:$("prodDate").value,location:$("location").value,ori:values[0],beef:values[1],spicy:values[2],cheese:values[3],custom:custom?{enabled:true,box3:+$("cBox3").value,box5:+$("cBox5").value}:null,requestNote:custom?$("requestNote").value.trim():"",note:$("prodNote").value};
+if(editingTargetId){
+if(!navigator.onLine)throw Error("Mengedit target lama membutuhkan koneksi server. Hubungkan internet lalu coba lagi.");
+const d=await api("/transactions/"+encodeURIComponent(editingTargetId),{method:"PUT",body:JSON.stringify(payload)});
+state=d.state;await kvSet("state",state);$("prodMsg").textContent="Target berhasil diperbarui. Stok disesuaikan berdasarkan selisih.";
+}else{await submitOperation("production",payload,"prodMsg");}
+editingTargetId=null;$("prodSubmit").textContent="Tambah target outlet";$("editTargetMsg").textContent="Pilih target untuk mengubah request tanpa membuat transaksi ganda.";
+ids.forEach(id=>$(id).value=0);$("location").value="";$("customEnabled").checked=false;$("customFields").classList.add("hidden");$("requestNoteWrap").classList.add("hidden");$("requestNote").value="";
+["cBox3","cBox5"].forEach(id=>$(id).value=0);$("prodNote").value="";$("targetSource").value="";
+productionPreview();await renderAll();
+}catch(e){$("prodMsg").textContent=e.message;}
+}
 async function manualStockOut(){try{const quantity=Number($("outQuantity").value);const reason=$("outReason").value.trim();if(!Number.isSafeInteger(quantity)||quantity<=0)throw Error("Jumlah pengurangan harus bilangan bulat lebih dari nol.");if(!reason)throw Error("Alasan pengurangan wajib diisi.");if(!confirm("Kurangi stok "+quantity+" pcs? Pastikan barang dan alasan sudah benar."))return;await submitOperation("stock-out",{item:$("outItem").value,quantity,note:reason,reason,date:new Date().toISOString().slice(0,10)},"outMsg");$("outQuantity").value="";$("outReason").value="";}catch(e){$("outMsg").textContent=e.message;}}
 function renderDailyTargets(){
 const box=$("targetDailyReport");if(!box||!state)return;
 const date=$("prodDate").value;
 const rows=(state.history||[]).filter(x=>x.type==="production"&&x.date===date).slice().sort((x,y)=>String(x.createdAt||"").localeCompare(String(y.createdAt||"")));
+renderTargetSource();
 const groups=new Map();
 rows.forEach(x=>{
 const name=x.location||"Outlet tidak diketahui";
