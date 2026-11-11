@@ -78,7 +78,7 @@ function operationChanges(op) {
     const ori = int(p.ori ?? 0, "Ori");
     const beef = int(p.beef ?? 0, "Beef");
     const spicy = int(p.spicy ?? 0, "Spicy");
-    const total = ori + beef + spicy;
+    const cheese = int(p.cheese ?? 0, "Cheese");\n    const total = ori + beef + spicy + cheese;
     if (!Number.isSafeInteger(total) || total <= 0) throw new Error("Jumlah loyang harus lebih dari nol.");
     let changes;
     if (p.custom && p.custom.enabled) {
@@ -160,7 +160,7 @@ app.get("/api/update/check", auth, async (req, res) => {
     const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits/main", { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
     if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
     const latest = await response.json();
-    res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
+    res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
   } catch (e) { res.status(503).json({ error: e.message || "Gagal memeriksa pembaruan." }); }
 });
 app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
