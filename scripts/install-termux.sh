@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
 pkg update -y
-pkg install -y nodejs-lts git openssl cloudflared
+pkg install -y nodejs-lts git openssl
 cd "$HOME"
 if [ ! -d insan-stock-manager ]; then
   git clone https://github.com/katsucodeid/insan-stock-manager.git
