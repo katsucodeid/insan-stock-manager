@@ -96,16 +96,20 @@ function operationChanges(op) {
     if (!Number.isSafeInteger(total) || total <= 0) throw new Error("Jumlah loyang harus lebih dari nol.");
     const packaging = {};
     const changes = { box3: 0, box5outer: 0, box5inner: 0, paper: 0 };
-    for (const [variant, quantity] of Object.entries(quantities)) {
-      const custom = p.packagingByVariant?.[variant];
-      const box3 = custom?.enabled ? int(custom.box3 ?? 0, "Box isi 3 " + variant) : quantity * 2;
-      const box5 = custom?.enabled ? int(custom.box5 ?? 0, "Box isi 5 " + variant) : quantity * 2;
-      if (!Number.isSafeInteger(box3) || !Number.isSafeInteger(box5)) throw new Error("Jumlah kemasan terlalu besar.");
-      packaging[variant] = { enabled: !!custom?.enabled, box3, box5 };
-      changes.box3 -= box3;
-      changes.box5outer -= box5;
-      changes.box5inner -= box5;
-      changes.paper -= box5;
+    if (!p.packagingByVariant && p.custom?.enabled) {
+      const box3 = int(p.custom.box3 ?? 0, "Box isi 3 khusus");
+      const box5 = int(p.custom.box5 ?? 0, "Box isi 5 khusus");
+      changes.box3 = -box3; changes.box5outer = -box5; changes.box5inner = -box5; changes.paper = -box5;
+      for (const [variant, quantity] of Object.entries(quantities)) packaging[variant] = { enabled: false, box3: quantity * 2, box5: quantity * 2 };
+    } else {
+      for (const [variant, quantity] of Object.entries(quantities)) {
+        const custom = p.packagingByVariant?.[variant];
+        const box3 = custom?.enabled ? int(custom.box3 ?? 0, "Box isi 3 " + variant) : quantity * 2;
+        const box5 = custom?.enabled ? int(custom.box5 ?? 0, "Box isi 5 " + variant) : quantity * 2;
+        if (!Number.isSafeInteger(box3) || !Number.isSafeInteger(box5)) throw new Error("Jumlah kemasan terlalu besar.");
+        packaging[variant] = { enabled: !!custom?.enabled, box3, box5 };
+        changes.box3 -= box3; changes.box5outer -= box5; changes.box5inner -= box5; changes.paper -= box5;
+      }
     }
     if (!OUTLETS.includes(p.location)) throw new Error("Pilih salah satu outlet yang tersedia.");
     const requestNote = String(p.requestNote || "").trim();
