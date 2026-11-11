@@ -196,8 +196,8 @@ Mika roti roll : ${fmt(s.mika)} pcs
 
 _________________
 Note‼️
-Box isi 5/3 stok limit: 500 pcs
-Kertas minyak stok limit: 1 pack (500 pcs)
+Batas minimum stok: Belum ditentukan
+Stok awal tanggung jawab: 11 November 2026
 ____________`;
   res.json({ report, stock: s, stockStartDate: db.stockStartDate || null });
 });
