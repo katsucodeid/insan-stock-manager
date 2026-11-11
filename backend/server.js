@@ -20,18 +20,19 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 
 const itemDefs = {
-  box3: { label: "Box isi 3", min: 500 },
-  box5outer: { label: "Box isi 5 luar (Slongsong)", min: 500 },
-  box5inner: { label: "Box isi 5 dalam (Tatakan Polos)", min: 500 },
-  paper: { label: "Kertas Minyak", min: 500 },
+  box3: { label: "Box isi 3", min: null },
+  box5outer: { label: "Box isi 5 luar (Slongsong)", min: null },
+  box5inner: { label: "Box isi 5 dalam (Tatakan Polos)", min: null },
+  paper: { label: "Kertas Minyak", min: null },
   mika: { label: "Mika roti roll", min: null }
 };
-const initialStock = { box3: 3861, box5outer: 3427, box5inner: 3559, paper: 1686, mika: 210 };
+const initialStock = { box3: 0, box5outer: 0, box5inner: 3595, paper: 1722, mika: 210 };
+const previousDefaultStock = { box3: 3861, box5outer: 3427, box5inner: 3559, paper: 1686, mika: 210 };
 let db;
 let writeQueue = Promise.resolve();
 
 function freshDb() {
-  return { version: 1, stock: { ...initialStock }, users: [], transactions: [], processed: [] };
+  return { version: 1, stock: { ...initialStock }, stockStartDate: "2026-11-11", users: [], transactions: [], processed: [] };
 }
 async function persist() {
   await fs.promises.mkdir(DATA_DIR, { recursive: true });
@@ -198,7 +199,7 @@ Note‼️
 Box isi 5/3 stok limit: 500 pcs
 Kertas minyak stok limit: 1 pack (500 pcs)
 ____________`;
-  res.json({ report, stock: s });
+  res.json({ report, stock: s, stockStartDate: db.stockStartDate || null });
 });
 app.get("/api/users", auth, adminOnly, (req, res) => res.json({ users: db.users.map(({ username, role }) => ({ username, role })) }));
 app.post("/api/users", auth, adminOnly, async (req, res) => {
@@ -220,6 +221,15 @@ async function start() {
   try { db = JSON.parse(await fs.promises.readFile(DATA_FILE, "utf8")); }
   catch { db = freshDb(); }
   db.stock = { ...initialStock, ...(db.stock || {}) };
+  // One-time migration: replace only the untouched legacy opening balances.
+  // Never overwrite a live inventory or any database with recorded transactions.
+  const hasTransactions = Array.isArray(db.transactions) && db.transactions.length > 0;
+  const matchesPreviousDefaults = Object.keys(previousDefaultStock).every(key => db.stock[key] === previousDefaultStock[key]);
+  if (!hasTransactions && matchesPreviousDefaults) {
+    db.stock = { ...initialStock };
+    db.stockStartDate = "2026-11-11";
+  }
+  db.stockStartDate ||= "2026-11-11";
   db.users ||= []; db.transactions ||= []; db.processed ||= [];
   if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD && !db.users.some(x => x.username === process.env.ADMIN_USERNAME)) {
     db.users.push({ id: require("crypto").randomUUID(), username: process.env.ADMIN_USERNAME, passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD, 12), role: "admin" });
