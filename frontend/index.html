@@ -248,8 +248,17 @@ body.nav-open{overflow:hidden}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.tabs,.nav-backdrop,.menu-toggle span{transition:none!important}}
 
+
+/* Header order: burger at the top-left */
+header{justify-content:flex-start!important;gap:12px!important}
+header>.menu-toggle{order:0;flex:0 0 44px;margin:0!important}
+header>.brand-lockup{order:1;flex:1 1 auto;min-width:0}
+header>.header-actions{order:2;flex:0 0 auto;margin-left:auto}
+header .brand-logo{object-fit:contain;display:block}
+@media(max-width:390px){header{gap:8px!important}header>.menu-toggle{flex-basis:40px}header>.header-actions button{padding:8px}}
+
 </style></head><body>
-<header><div class="brand-lockup"><img class="brand-logo" src="./img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris & produksi</div></div></div><div class="header-actions"><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
+<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="./img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris & produksi</div></div></div><div class="header-actions"><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
 <section id="login" class="panel"><h2>Masuk</h2><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
