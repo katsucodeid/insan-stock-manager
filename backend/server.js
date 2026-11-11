@@ -26,8 +26,11 @@ const itemDefs = {
   paper: { label: "Kertas Minyak", min: null },
   mika: { label: "Mika roti roll", min: null }
 };
-const initialStock = { box3: 0, box5outer: 0, box5inner: 3595, paper: 1722, mika: 210 };
-const previousDefaultStock = { box3: 3861, box5outer: 3427, box5inner: 3559, paper: 1686, mika: 210 };
+const initialStock = { box3: 3897, box5outer: 3463, box5inner: 3595, paper: 1722, mika: 210 };
+const legacyDefaultStocks = [
+  { box3: 0, box5outer: 0, box5inner: 3595, paper: 1722, mika: 210 },
+  { box3: 3861, box5outer: 3427, box5inner: 3559, paper: 1686, mika: 210 }
+];
 let db;
 let writeQueue = Promise.resolve();
 
@@ -188,17 +191,11 @@ app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
 app.get("/api/report", auth, (req, res) => {
   const s = db.stock, fmt = n => Number(n || 0).toLocaleString("id-ID");
   const report = `*INSAN*:
-Box isi 3 : ${fmt(s.box3)} pcs
-Box isi 5 luar (Slongsong) : ${fmt(s.box5outer)} pcs
-Box isi 5 dalam (Tatakan Polos) : ${fmt(s.box5inner)} pcs
-Kertas Minyak : ${fmt(s.paper)} pcs
-Mika roti roll : ${fmt(s.mika)} pcs
-
-_________________
-Note‼️
-Batas minimum stok: Belum ditentukan
-Stok awal tanggung jawab: 11 November 2026
-____________`;
+Box isi 3 : ${fmt(s.box3)}pcs
+Box isi 5 luar : ${fmt(s.box5outer)}pcs
+Box isi 5 dalam : ${fmt(s.box5inner)}pcs
+Kertas Minyak: ${fmt(s.paper)}pcs
+Mika roti roll : ${fmt(s.mika)}pcs`;
   res.json({ report, stock: s, stockStartDate: db.stockStartDate || null });
 });
 app.get("/api/users", auth, adminOnly, (req, res) => res.json({ users: db.users.map(({ username, role }) => ({ username, role })) }));
@@ -224,8 +221,8 @@ async function start() {
   // One-time migration: replace only the untouched legacy opening balances.
   // Never overwrite a live inventory or any database with recorded transactions.
   const hasTransactions = Array.isArray(db.transactions) && db.transactions.length > 0;
-  const matchesPreviousDefaults = Object.keys(previousDefaultStock).every(key => db.stock[key] === previousDefaultStock[key]);
-  if (!hasTransactions && matchesPreviousDefaults) {
+  const matchesLegacyDefaults = legacyDefaultStocks.some(legacy => Object.keys(initialStock).every(key => db.stock[key] === legacy[key]));
+  if (!hasTransactions && matchesLegacyDefaults) {
     db.stock = { ...initialStock };
     db.stockStartDate = "2026-11-11";
   }
