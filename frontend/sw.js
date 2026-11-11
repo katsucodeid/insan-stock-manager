@@ -1,5 +1,5 @@
-const CACHE = "insan-stock-v11";
-const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json", "../img/BackgroundEraser_20261016_074306739.png"];
+const CACHE = "insan-stock-v12";
+const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });
