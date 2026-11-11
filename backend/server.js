@@ -97,8 +97,7 @@ function operationChanges(op) {
     if (p.custom && p.custom.enabled) {
       const box3 = int(p.custom.box3 ?? 0, "Box isi 3 khusus");
       const box5 = int(p.custom.box5 ?? 0, "Box isi 5 khusus");
-      const paper = int(p.custom.paper ?? 0, "Kertas khusus");
-      changes = { box3: -box3, box5outer: -box5, box5inner: -box5, paper: -paper };
+      changes = { box3: -box3, box5outer: -box5, box5inner: -box5, paper: -box5 };
     } else {
       const use = total * 2;
       changes = { box3: -use, box5outer: -use, box5inner: -use, paper: -use };
@@ -151,6 +150,32 @@ app.post("/api/sync", auth, async (req, res) => {
     return { accepted, rejected, state: snapshot(req.user) };
   });
   res.json(result);
+});
+app.put("/api/transactions/:id", auth, async (req, res) => {
+  try {
+    const result = await locked(async () => {
+      const index = db.transactions.findIndex(x => x.id === req.params.id);
+      if (index < 0) throw new Error("Target produksi tidak ditemukan.");
+      const oldTx = db.transactions[index];
+      if (oldTx.type !== "production") throw new Error("Hanya target produksi yang dapat diedit.");
+      if (req.user.role !== "admin" && oldTx.createdBy !== req.user.username) throw new Error("Anda hanya dapat mengedit target yang dibuat sendiri.");
+      const parsed = operationChanges({ type: "production", payload: req.body || {} });
+      const nextChanges = parsed.changes || {};
+      const keys = new Set([...Object.keys(oldTx.changes || {}), ...Object.keys(nextChanges)]);
+      const deltas = {};
+      for (const key of keys) {
+        if (!Object.hasOwn(itemDefs, key)) throw new Error("Data perubahan stok lama tidak valid.");
+        const delta = (nextChanges[key] || 0) - ((oldTx.changes || {})[key] || 0);
+        if (!Number.isSafeInteger(delta) || !Number.isSafeInteger(db.stock[key] + delta) || db.stock[key] + delta < 0) throw new Error("Stok " + itemDefs[key].label + " tidak mencukupi untuk perubahan target.");
+        deltas[key] = delta;
+      }
+      for (const [key, delta] of Object.entries(deltas)) db.stock[key] += delta;
+      db.transactions[index] = { ...oldTx, date: parsed.date || oldTx.date, location: parsed.location, note: parsed.note, lines: parsed.lines, changes: nextChanges, updatedAt: new Date().toISOString(), updatedBy: req.user.username };
+      await persist();
+      return { ok: true, state: snapshot(req.user) };
+    });
+    res.json(result);
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
   try {
