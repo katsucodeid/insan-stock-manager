@@ -1,2 +1,2 @@
-// Ganti dengan URL backend HTTPS milik Anda.
-window.INSAN_CONFIG = { API_BASE: "https://api-domain-anda.example" };
+// API same-origin: frontend and backend are served by the same Termux server.
+window.INSAN_CONFIG = { API_BASE: "" };
