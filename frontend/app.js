@@ -111,7 +111,7 @@ Mika roti roll : ${fmt(s.mika)}pcs`;}
 function generateFullStockReport(){
 const source=$("stockOpnameInput").value;
 if(!source.trim()){ $("stockOpnameMsg").textContent="Tempel pesan stock opname terlebih dahulu."; return; }
-const section=/\\*INSAN\\*:[\\s\\S]*?(?=\\n(?:_{5,}|-{5,})|$)/i;
+const section=/\*INSAN\*:[\s\S]*?(?=\n(?:_{5,}|-{5,})|$)/i;
 if(!section.test(source)){ $("stockOpnameMsg").textContent="Bagian *INSAN* tidak ditemukan. Pastikan pesan memiliki judul *INSAN*:. Tidak ada teks yang diubah."; return; }
 const s=state?.stock;
 if(!s){ $("stockOpnameMsg").textContent="Data stok belum tersedia. Hubungkan ke server lalu perbarui data."; return; }
