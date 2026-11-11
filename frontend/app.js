@@ -49,67 +49,15 @@ state.history.unshift({id:op.id,type:op.type,date:p.date||new Date().toISOString
 async function submitOperation(type,payload,msgId){const op={id:newId(),type,payload};try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:[op]})});if(d.rejected?.length){const rejected=new Error(d.rejected[0].error);rejected.status=409;throw rejected;}state=d.state;await kvSet("state",state);$(msgId).textContent="Tersimpan dan tersinkron ke server.";}catch(e){if(!(e instanceof TypeError)&&navigator.onLine&&e.status&&e.status<500)throw e;applyLocal(op);await queueAdd(op);await kvSet("state",state);$(msgId).textContent="Disimpan offline di perangkat. Akan dikirim saat tersambung.";}await renderAll();}
 async function stockIn(){try{await submitOperation("stock-in",{item:$("inItem").value,packs:+$("packs").value,perPack:+$("perPack").value,extra:+$("extra").value,note:$("inNote").value},"inMsg");}catch(e){$("inMsg").textContent=e.message;}}
 let editingTargetId=null;
-function productionPreview(){
-const variants=[["Ori","ori"],["Beef","beef"],["Spicy","spicy"],["Cheese","cheese"]];
-const total=variants.reduce((sum,[,id])=>sum+Math.max(0,Number($(id).value)||0),0);
-const breakdown=variants.filter(([,id])=>Number($(id).value)>0).map(([name,id])=>Number($(id).value)+" "+name).join(" · ");
-const special=$("customEnabled").checked;
-const box3=special?(Number($("cBox3").value)||0):total*2;
-const box5=special?(Number($("cBox5").value)||0):total*2;
-$("productionPreview").innerHTML="";
-const summary=document.createElement("div");summary.className="production-total";
-const label=document.createElement("span");label.textContent="Total seluruh loyang";
-const value=document.createElement("strong");value.textContent=total.toLocaleString("id-ID")+" loyang";
-summary.append(label,value);$("productionPreview").appendChild(summary);
-const detail=document.createElement("p");detail.className="muted";detail.textContent=total?breakdown:"Masukkan jumlah loyang pada varian di atas."; $("productionPreview").appendChild(detail);
-const stock=document.createElement("p");stock.className="muted";stock.textContent=total?"Perkiraan pengurangan: Box isi 3 "+box3+" pcs · Box isi 5 luar "+box5+" pcs · Box isi 5 dalam "+box5+" pcs · Kertas minyak "+box5+" pcs.": "Pengurangan stok akan dihitung setelah jumlah loyang diisi."; $("productionPreview").appendChild(stock);
-}
-["ori","beef","spicy","cheese","cBox3","cBox5","customEnabled"].forEach(id=>$(id).addEventListener("input",productionPreview));
-$("customEnabled").addEventListener("change",()=>{$("requestNoteWrap").classList.toggle("hidden",!$("customEnabled").checked);productionPreview();});
+const pvars=["ori","beef","spicy","cheese"];
+const plabel={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
+function packData(){const o={};pvars.forEach(k=>{const n=plabel[k],on=$("packCustom"+n).checked;o[k]={enabled:on,box3:on?Number($("packBox3"+n).value):0,box5:on?Number($("packBox5"+n).value):0};});return o;}
+function productionPreview(){let total=0,b3=0,b5=0,details=[];pvars.forEach(k=>{const q=Math.max(0,Number($(k).value)||0),n=plabel[k],on=$("packCustom"+n).checked,x3=on?(Number($("packBox3"+n).value)||0):q*2,x5=on?(Number($("packBox5"+n).value)||0):q*2;total+=q;b3+=x3;b5+=x5;if(q)details.push(n+": "+q+" loyang ("+x5+" Box isi 5, "+x3+" Box isi 3)");});$("productionPreview").textContent="Total "+total+" loyang · "+(details.join(" | ")||"Isi jumlah loyang")+". Pengurangan: Box isi 3 "+b3+", Box isi 5 luar/dalam "+b5+", Kertas Minyak "+b5+".";}
+pvars.forEach(k=>{const n=plabel[k];[k,"packBox3"+n,"packBox5"+n].forEach(id=>$(id).addEventListener("input",productionPreview));$("packCustom"+n).addEventListener("change",()=>{$("packFields"+n).classList.toggle("hidden",!$("packCustom"+n).checked);productionPreview();});});
 $("prodDate").addEventListener("change",()=>{renderDailyTargets();renderTargetSource();});
-function renderTargetSource(){
-const select=$("targetSource");if(!select||!state)return;
-const previous=select.value,date=$("prodDate").value;
-const rows=(state.history||[]).filter(x=>x.type==="production"&&x.date===date);
-select.innerHTML='<option value="">Pilih target tanggal ini</option>';
-rows.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=(x.location||"Outlet")+" · "+(x.lines?.total||0)+" loyang · "+(x.lines?.ori||0)+" Ori / "+(x.lines?.beef||0)+" Beef / "+(x.lines?.spicy||0)+" Spicy / "+(x.lines?.cheese||0)+" Cheese";select.appendChild(o);});
-if(rows.some(x=>x.id===previous))select.value=previous;
-}
-function loadTargetForRequest(){
-const id=$("targetSource").value;
-const tx=(state?.history||[]).find(x=>x.id===id&&x.type==="production");
-if(!tx){$("editTargetMsg").textContent="Pilih target produksi yang tersedia.";return;}
-const l=tx.lines||{};
-$("prodDate").value=tx.date||$("prodDate").value;$("location").value=tx.location||"";
-["ori","beef","spicy","cheese"].forEach(k=>$(k).value=Number(l[k]||0));
-const custom=!!l.custom?.enabled;
-$("customEnabled").checked=custom;$("customFields").classList.toggle("hidden",!custom);$("requestNoteWrap").classList.toggle("hidden",!custom);
-$("cBox3").value=Number(l.custom?.box3||0);$("cBox5").value=Number(l.custom?.box5||0);
-$("requestNote").value=l.requestNote||"";$("prodNote").value=tx.note||"";
-editingTargetId=tx.id;$("prodSubmit").textContent="Simpan perubahan target";
-$("editTargetMsg").textContent="Mode edit aktif: "+(tx.location||"Outlet")+" · perubahan akan menghitung selisih stok dari transaksi lama.";
-productionPreview();renderDailyTargets();
-}
-async function production(){
-try{
-const ids=["ori","beef","spicy","cheese"],values=ids.map(id=>Number($(id).value));
-if(values.some(v=>!Number.isSafeInteger(v)||v<0)||values.reduce((x,y)=>x+y,0)<=0)throw Error("Isi setidaknya satu jumlah loyang dengan bilangan bulat nol atau lebih.");
-if(!$("location").value)throw Error("Pilih outlet terlebih dahulu.");
-if(!$("prodDate").value)throw Error("Tanggal target wajib dipilih.");
-const custom=$("customEnabled").checked;
-if(custom&&!$("requestNote").value.trim())throw Error("Keterangan request khusus wajib diisi.");
-const payload={date:$("prodDate").value,location:$("location").value,ori:values[0],beef:values[1],spicy:values[2],cheese:values[3],custom:custom?{enabled:true,box3:+$("cBox3").value,box5:+$("cBox5").value}:null,requestNote:custom?$("requestNote").value.trim():"",note:$("prodNote").value};
-if(editingTargetId){
-if(!navigator.onLine)throw Error("Mengedit target lama membutuhkan koneksi server. Hubungkan internet lalu coba lagi.");
-const d=await api("/transactions/"+encodeURIComponent(editingTargetId),{method:"PUT",body:JSON.stringify(payload)});
-state=d.state;await kvSet("state",state);$("prodMsg").textContent="Target berhasil diperbarui. Stok disesuaikan berdasarkan selisih.";
-}else{await submitOperation("production",payload,"prodMsg");}
-editingTargetId=null;$("prodSubmit").textContent="Tambah target outlet";$("editTargetMsg").textContent="Pilih target untuk mengubah request tanpa membuat transaksi ganda.";
-ids.forEach(id=>$(id).value=0);$("location").value="";$("customEnabled").checked=false;$("customFields").classList.add("hidden");$("requestNoteWrap").classList.add("hidden");$("requestNote").value="";
-["cBox3","cBox5"].forEach(id=>$(id).value=0);$("prodNote").value="";$("targetSource").value="";
-productionPreview();await renderAll();
-}catch(e){$("prodMsg").textContent=e.message;}
-}
+function renderTargetSource(){const s=$("targetSource");if(!s||!state)return;const prev=s.value,rows=(state.history||[]).filter(x=>x.type==="production"&&x.date===$("prodDate").value);s.innerHTML='<option value="">Pilih target tanggal ini</option>';rows.forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=(x.location||"Outlet")+" · "+(x.lines?.total||0)+" loyang";s.appendChild(o);});if(rows.some(x=>x.id===prev))s.value=prev;}
+function loadTargetForRequest(){const id=$("targetSource").value,tx=(state?.history||[]).find(x=>x.id===id&&x.type==="production");if(!tx){$("editTargetMsg").textContent="Pilih target produksi.";return;}const l=tx.lines||{},packs=l.packagingByVariant||{};$("prodDate").value=tx.date||$("prodDate").value;$("location").value=tx.location||"";pvars.forEach(k=>{const n=plabel[k],p=packs[k];$(k).value=Number(l[k]||0);$("packCustom"+n).checked=!!p?.enabled;$("packFields"+n).classList.toggle("hidden",!p?.enabled);$("packBox3"+n).value=Number(p?.box3||0);$("packBox5"+n).value=Number(p?.box5||0);});$("requestNote").value=l.requestNote||"";$("prodNote").value=tx.note||"";editingTargetId=tx.id;$("prodSubmit").textContent="Simpan perubahan target";$("editTargetMsg").textContent="Edit target "+tx.location+". Kemasan dapat diatur per varian.";productionPreview();renderDailyTargets();}
+async function production(){try{const vals=pvars.map(k=>Number($(k).value));if(vals.some(v=>!Number.isSafeInteger(v)||v<0)||vals.reduce((a,b)=>a+b,0)<=0)throw Error("Isi setidaknya satu jumlah loyang yang valid.");if(!$("location").value)throw Error("Pilih outlet terlebih dahulu.");const packagingByVariant=packData();for(const k of pvars){const p=packagingByVariant[k];if(p.enabled&&(!Number.isSafeInteger(p.box3)||p.box3<0||!Number.isSafeInteger(p.box5)||p.box5<0))throw Error("Jumlah kemasan "+plabel[k]+" tidak valid.");}const payload={date:$("prodDate").value,location:$("location").value,ori:vals[0],beef:vals[1],spicy:vals[2],cheese:vals[3],packagingByVariant,requestNote:$("requestNote").value.trim(),note:$("prodNote").value};if(editingTargetId){if(!navigator.onLine)throw Error("Edit target lama membutuhkan koneksi internet.");const d=await api("/transactions/"+encodeURIComponent(editingTargetId),{method:"PUT",body:JSON.stringify(payload)});state=d.state;await kvSet("state",state);$("prodMsg").textContent="Target diperbarui dan stok disesuaikan berdasarkan selisih.";}else await submitOperation("production",payload,"prodMsg");editingTargetId=null;$("prodSubmit").textContent="Tambah target outlet";pvars.forEach(k=>{const n=plabel[k];$(k).value=0;$("packCustom"+n).checked=false;$("packFields"+n).classList.add("hidden");$("packBox3"+n).value=0;$("packBox5"+n).value=0;});$("location").value="";$("requestNote").value="";$("prodNote").value="";$("targetSource").value="";productionPreview();await renderAll();}catch(e){$("prodMsg").textContent=e.message;}}
 async function manualStockOut(){try{const quantity=Number($("outQuantity").value);const reason=$("outReason").value.trim();if(!Number.isSafeInteger(quantity)||quantity<=0)throw Error("Jumlah pengurangan harus bilangan bulat lebih dari nol.");if(!reason)throw Error("Alasan pengurangan wajib diisi.");if(!confirm("Kurangi stok "+quantity+" pcs? Pastikan barang dan alasan sudah benar."))return;await submitOperation("stock-out",{item:$("outItem").value,quantity,note:reason,reason,date:new Date().toISOString().slice(0,10)},"outMsg");$("outQuantity").value="";$("outReason").value="";}catch(e){$("outMsg").textContent=e.message;}}
 function renderDailyTargets(){
 const box=$("targetDailyReport");if(!box||!state)return;
