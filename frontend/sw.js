@@ -1,4 +1,4 @@
-const CACHE = "insan-stock-v6";
+const CACHE = "insan-stock-v7";
 const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
