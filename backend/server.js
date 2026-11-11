@@ -235,6 +235,14 @@ async function start() {
     console.log("Akun admin awal dibuat:", process.env.ADMIN_USERNAME);
   }
   await persist();
-  app.listen(PORT, "0.0.0.0", () => console.log(`INSAN Stock Manager aktif di http://0.0.0.0:${PORT}`));
+  const server = app.listen(PORT, "0.0.0.0", () => console.log(`INSAN Stock Manager aktif di http://0.0.0.0:${PORT}`));
+  server.on("error", err => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`Port ${PORT} sudah digunakan. Hentikan server INSAN yang lama (CTRL+C pada sesi Termux sebelumnya), lalu jalankan kembali scripts/start-termux.sh.`);
+    } else {
+      console.error("Server gagal dijalankan:", err);
+    }
+    process.exit(1);
+  });
 }
 start().catch(err => { console.error(err); process.exit(1); });
