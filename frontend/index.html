@@ -2,8 +2,8 @@
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101827"><meta name="description" content="Aplikasi inventaris offline-first INSAN"><title>INSAN Stock Manager</title><link rel="manifest" href="manifest.json">
 <style>
-:root{font-family:system-ui,Arial;color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--text:#edf3fc;--muted:#9aabc2;--line:#26364d;--accent:#5b9cff;--danger:#ff7373}
-:root.light{color-scheme:light;--bg:#f3f6fb;--panel:#fff;--text:#172235;--muted:#65758c;--line:#dce4ef;--accent:#246ee9;--danger:#c93636}
+:root{font-family:system-ui,Arial;color-scheme:dark;--bg:#24130e;--panel:#3a2118;--text:#fff3dc;--muted:#d0b69c;--line:#67402c;--accent:#f59a18;--danger:#df5544}
+:root.light{color-scheme:light;--bg:#fff5e6;--panel:#fffdf8;--text:#3b2117;--muted:#80634e;--line:#ead4b9;--accent:#d97908;--danger:#c93636}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}header{padding:18px;display:flex;justify-content:space-between;align-items:center;max-width:900px;margin:auto}main{max-width:900px;margin:auto;padding:0 16px 40px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.muted{color:var(--muted);font-size:13px}.qty{font-size:25px;font-weight:750;margin-top:5px}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:120px}input,select,button,textarea{font:inherit;border-radius:10px;padding:11px;border:1px solid var(--line);background:var(--bg);color:var(--text);width:100%;margin:5px 0}button{background:var(--accent);color:white;border:0;font-weight:650;cursor:pointer}.secondary{background:transparent;border:1px solid var(--line);color:var(--text)}label{font-size:13px;color:var(--muted)}h2{font-size:17px;margin:0 0 10px}.hint{padding:10px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:13px;margin:8px 0 12px}.history-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.history-card .detail{font-size:13px;color:var(--muted);line-height:1.6;margin:7px 0}.danger{background:var(--danger);color:#fff}.hidden{display:none}.ok{color:#39c98a}.low{color:var(--danger)}textarea{min-height:190px}.tabs{display:flex;gap:7px;overflow:auto}.tabs button{min-width:100px}#connection{padding:8px 12px;border-radius:9px;background:var(--panel);margin:10px 0}small{color:var(--muted)}
 /* Penyegaran antarmuka */
 .panel{box-shadow:0 8px 24px rgba(0,0,0,.10)}
@@ -101,8 +101,38 @@ textarea{resize:vertical;line-height:1.55}
 }
 @media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
 
+
+/* Identitas visual Abon Gulung Gembul · INSAN × KatsuCode */
+body{background:radial-gradient(ellipse at 50% -12%,rgba(245,154,24,.19),transparent 42%),var(--bg)}
+header{max-width:1120px}
+.brand-lockup{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-logo{width:58px;height:58px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 5px 10px rgba(0,0,0,.22))}
+.brand-copy{min-width:0}
+.brand-copy b{display:block;font-size:clamp(13px,2vw,16px);letter-spacing:.045em;color:var(--text)}
+.brand-copy .muted{font-size:12px}
+.theme-toggle{flex:0 0 auto}
+.panel{box-shadow:0 12px 30px rgba(31,13,5,.16)}
+#stockGrid>.panel{background:linear-gradient(145deg,var(--panel),color-mix(in srgb,var(--panel) 76%,var(--accent)));border-color:color-mix(in srgb,var(--accent) 24%,var(--line))}
+button{background:var(--accent);color:#321809}
+.tabs button{color:var(--muted)}
+#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(1),
+#app:has(#incoming:not(.hidden)) .tabs button:nth-child(2),
+#app:has(#production:not(.hidden)) .tabs button:nth-child(3),
+#app:has(#report:not(.hidden)) .tabs button:nth-child(4),
+#app:has(#history:not(.hidden)) .tabs button:nth-child(5),
+#app:has(#manual:not(.hidden)) .tabs button:nth-child(6){color:#321809}
+.production-total strong,.outlet-target-heading strong{color:var(--accent)}
+.outlet-target-heading strong{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.app-footer{max-width:1120px;margin:22px auto 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));text-align:center;border-top:1px solid var(--line);color:var(--muted)}
+.footer-brand{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--text)}
+.footer-credit{margin-top:7px;font-size:14px;color:var(--text)}
+.footer-credit span:first-child{color:#e45a3f;padding:0 3px}
+.footer-x{color:var(--accent);padding:0 4px;font-weight:800}
+.footer-note{font-size:11px;margin-top:5px}
+@media(max-width:420px){.brand-logo{width:48px;height:48px}.brand-lockup{gap:9px}.app-footer{padding-left:14px;padding-right:14px}}
+
 </style></head><body>
-<header><div><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris offline-first</div></div><button class="secondary" style="width:auto" onclick="toggleTheme()">◐ Tema</button></header>
+<header><div class="brand-lockup"><img class="brand-logo" src="./assets/insan-logo.webp" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris & produksi</div></div></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></header>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
 <section id="login" class="panel"><h2>Masuk</h2><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
@@ -113,4 +143,4 @@ textarea{resize:vertical;line-height:1.55}
 <div id="production" class="tab panel hidden"><h2>Catat target produksi</h2><p class="hint">Pilih outlet, lalu isi jumlah setiap varian. Total seluruh loyang dihitung otomatis dan ditampilkan sebelum target disimpan.</p><div class="row"><div><label>Tanggal</label><input id="prodDate" type="date"></div><div><label>Outlet / Toko</label><select id="location"><option value="">Pilih outlet</option><option value="Grand Wisata">Grand Wisata</option><option value="Bektim">Bektim</option><option value="Harapan Indah">Harapan Indah</option></select></div></div><h3 style="font-size:14px;margin:14px 0 6px">Jumlah loyang per varian</h3><div class="variant-grid"><div class="variant-card"><label for="ori">Ori</label><input id="ori" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="beef">Beef</label><input id="beef" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="spicy">Spicy</label><input id="spicy" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="cheese">Cheese</label><input id="cheese" type="number" min="0" step="1" value="0" inputmode="numeric"></div></div><label><input id="customEnabled" type="checkbox" style="width:auto" onchange="document.getElementById('customFields').classList.toggle('hidden',!this.checked)"> Gunakan request kemasan khusus (menggantikan hitungan normal)</label><div id="customFields" class="hidden"><div class="row"><div><label>Box isi 3</label><input id="cBox3" type="number" min="0" value="0"></div><div><label>Box isi 5 (luar & dalam)</label><input id="cBox5" type="number" min="0" value="0"></div><div><label>Kertas minyak</label><input id="cPaper" type="number" min="0" value="0"></div></div><small>Contoh: request 9 box isi 5, 1 box isi 3 → isi Box isi 3 = 1, Box isi 5 = 9, kertas = 9.</small></div><div id="requestNoteWrap" class="hidden"><label>Detail request khusus (wajib)</label><textarea id="requestNote" rows="2" placeholder="Contoh: request kemasan campuran sesuai pesanan pelanggan"></textarea></div><label>Catatan tambahan (opsional)</label><input id="prodNote" placeholder="Contoh: nomor pesanan pelanggan"><div id="productionPreview" class="hint">Isi jumlah loyang untuk melihat perkiraan pengurangan stok.</div><button onclick="production()">Tambah target outlet</button><p id="prodMsg" class="muted"></p><h2 style="margin-top:18px">Rekap target harian</h2><p class="hint">Setiap outlet menampilkan jumlah per varian sekaligus total seluruh loyang dari semua input pada tanggal tersebut.</p><div id="targetDailyReport" class="history-card">Belum ada target untuk tanggal ini.</div></div>
 <div id="report" class="tab panel hidden"><h2>Laporan INSAN siap salin</h2><textarea id="reportText" readonly></textarea><button onclick="copyReport()">Salin laporan</button><button class="secondary" onclick="loadReport()">Perbarui laporan</button></div>
 <div id="manual" class="tab panel hidden"><h2>Pengurangan stok manual</h2><p class="hint">Gunakan jika ada barang rusak, hilang, dipakai di luar produksi, atau koreksi stok. Masukkan alasan agar mudah dilacak.</p><label>Barang</label><select id="outItem"><option value="box3">Box isi 3</option><option value="box5outer">Box isi 5 luar / Slongsong</option><option value="box5inner">Box isi 5 dalam / Tatakan polos</option><option value="paper">Kertas Minyak</option><option value="mika">Mika roti roll</option></select><label>Jumlah yang dikurangi (pcs)</label><input id="outQuantity" type="number" min="1" step="1" placeholder="Contoh: 12"><label>Alasan pengurangan</label><textarea id="outReason" rows="2" placeholder="Contoh: 5 pcs rusak dan 7 pcs digunakan untuk sampel"></textarea><button class="danger" onclick="manualStockOut()">Kurangi stok</button><p id="outMsg" class="muted"></p></div><div id="history" class="tab panel hidden"><h2>Riwayat transaksi</h2><p class="hint">Admin dapat menghapus transaksi yang salah. Stok akan dikembalikan sesuai perubahan transaksi. Penghapusan membutuhkan koneksi server.</p><label>Filter riwayat</label><select id="historyFilter" onchange="renderHistory()"><option value="all">Semua transaksi</option><option value="production">Target produksi</option><option value="stock-in">Barang masuk</option><option value="stock-out">Pengurangan stok</option></select><div id="historyList"></div></div>
-</section></main><script src="config.js"></script><script src="app.js"></script></body></html>
+</section></main><footer class="app-footer"><div class="footer-brand">INSAN STOCK MANAGER</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">Sistem pencatatan stok dan produksi · Offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
