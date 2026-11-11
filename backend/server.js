@@ -133,6 +133,24 @@ app.post("/api/sync", auth, async (req, res) => {
   });
   res.json(result);
 });
+app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await locked(async () => {
+      const index = db.transactions.findIndex(x => x.id === req.params.id);
+      if (index < 0) throw new Error("Transaksi tidak ditemukan atau sudah dihapus.");
+      const tx = db.transactions[index];
+      for (const [key, delta] of Object.entries(tx.changes || {})) {
+        if (!Object.hasOwn(itemDefs, key) || !Number.isSafeInteger(delta) || !Number.isSafeInteger(db.stock[key] - delta) || db.stock[key] - delta < 0) throw new Error("Pembatalan transaksi tidak aman. Periksa stok terlebih dahulu.");
+      }
+      for (const [key, delta] of Object.entries(tx.changes || {})) db.stock[key] -= delta;
+      db.transactions.splice(index, 1);
+      db.processed = db.processed.filter(id => id !== tx.id);
+      await persist();
+      return { ok: true, state: snapshot(req.user) };
+    });
+    res.json(result);
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
 app.get("/api/report", auth, (req, res) => {
   const s = db.stock, fmt = n => Number(n || 0).toLocaleString("id-ID");
   const report = `*INSAN*:
