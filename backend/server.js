@@ -65,7 +65,15 @@ function int(value, label) {
 }
 function operationChanges(op) {
   const p = op.payload || {};
-  if (op.type === "stock-out") {\n    if (!Object.hasOwn(itemDefs, p.item)) throw new Error("Barang tidak dikenal.");\n    const quantity = int(p.quantity, "Jumlah pengurangan");\n    if (quantity <= 0) throw new Error("Jumlah pengurangan harus lebih dari nol.");\n    const note = String(p.note || "").trim();\n    if (!note) throw new Error("Alasan pengurangan wajib diisi.");\n    return { changes: { [p.item]: -quantity }, lines: { item: p.item, quantity, reason: note }, date: p.date, note, location: "" };\n  }\n  if (op.type === "stock-in") {
+  if (op.type === "stock-out") {
+    if (!Object.hasOwn(itemDefs, p.item)) throw new Error("Barang tidak dikenal.");
+    const quantity = int(p.quantity, "Jumlah pengurangan");
+    if (quantity <= 0) throw new Error("Jumlah pengurangan harus lebih dari nol.");
+    const note = String(p.note || "").trim();
+    if (!note) throw new Error("Alasan pengurangan wajib diisi.");
+    return { changes: { [p.item]: -quantity }, lines: { item: p.item, quantity, reason: note }, date: p.date, note, location: "" };
+  }
+  if (op.type === "stock-in") {
     if (!Object.hasOwn(itemDefs, p.item)) throw new Error("Barang tidak dikenal.");
     const packs = int(p.packs ?? 0, "Jumlah pack");
     const perPack = int(p.perPack ?? 0, "Isi per pack");
@@ -90,7 +98,10 @@ function operationChanges(op) {
       const use = total * 2;
       changes = { box3: -use, box5outer: -use, box5inner: -use, paper: -use };
     }
-    if (!OUTLETS.includes(p.location)) throw new Error("Pilih salah satu outlet yang tersedia.");\n    const requestNote = String(p.requestNote || "").trim();\n    if (p.custom?.enabled && !requestNote) throw new Error("Keterangan request khusus wajib diisi.");\n    return { changes, lines: { ori, beef, spicy, cheese, total, custom: p.custom || null, requestNote }, date: p.date, note: p.note || "", location: p.location };
+    if (!OUTLETS.includes(p.location)) throw new Error("Pilih salah satu outlet yang tersedia.");
+    const requestNote = String(p.requestNote || "").trim();
+    if (p.custom?.enabled && !requestNote) throw new Error("Keterangan request khusus wajib diisi.");
+    return { changes, lines: { ori, beef, spicy, cheese, total, custom: p.custom || null, requestNote }, date: p.date, note: p.note || "", location: p.location };
   }
   throw new Error("Jenis transaksi tidak dikenal.");
 }
