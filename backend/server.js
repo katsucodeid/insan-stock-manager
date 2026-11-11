@@ -86,7 +86,8 @@ function operationChanges(op) {
     const ori = int(p.ori ?? 0, "Ori");
     const beef = int(p.beef ?? 0, "Beef");
     const spicy = int(p.spicy ?? 0, "Spicy");
-    const cheese = int(p.cheese ?? 0, "Cheese");\n    const total = ori + beef + spicy + cheese;
+    const cheese = int(p.cheese ?? 0, "Cheese");
+    const total = ori + beef + spicy + cheese;
     if (!Number.isSafeInteger(total) || total <= 0) throw new Error("Jumlah loyang harus lebih dari nol.");
     let changes;
     if (p.custom && p.custom.enabled) {
