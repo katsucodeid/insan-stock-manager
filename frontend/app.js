@@ -21,8 +21,24 @@ async function logout(){token=null;cachedUser=null;localStorage.removeItem("insa
 async function refresh(){try{state=await api("/state");await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
 async function renderAll(){if(!state)return;$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();await loadReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");}
-function showTab(id){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));$(id).classList.remove("hidden");if(id==="report")loadReport();}
-function renderHistory(){const list=state.history||[];$("historyList").innerHTML=list.map(x=>`<div class="panel"><b>${x.type==="stock-in"?"Barang masuk":"Target produksi"}</b><div class="muted">${x.date||""} · ${x.location||x.createdBy||""}</div><small>${JSON.stringify(x.lines||{})}</small></div>`).join("")||"Belum ada riwayat.";}
+function showTab(id){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));$(id).classList.remove("hidden");if(id==="report")loadReport();if(id==="history")renderHistory();}
+function renderHistory(){
+const filter=$("historyFilter")?$("historyFilter").value:"all";
+const list=(state.history||[]).filter(x=>filter==="all"||x.type===filter);
+const admin=(cachedUser?.role||state.user?.role)==="admin";
+const root=$("historyList");root.innerHTML="";
+list.forEach(x=>{
+const card=document.createElement("article");card.className="history-card";
+const title=document.createElement("b");title.textContent=x.type==="stock-in"?"Barang masuk":"Target produksi";card.appendChild(title);
+const meta=document.createElement("div");meta.className="muted";meta.textContent=(x.date||"")+" · Oleh: "+(x.createdBy||"-");card.appendChild(meta);
+const detail=document.createElement("div");detail.className="detail";
+const l=x.lines||{};detail.textContent=x.type==="stock-in"?"Barang: "+(state.itemDefs?.[l.item]?.label||l.item)+" · Total: "+(l.total||0)+" pcs · Pack: "+(l.packs||0)+" × "+(l.perPack||0)+" pcs · Tambahan: "+(l.extra||0):"Lokasi: "+(x.location||"-")+" · Ori: "+(l.ori||0)+" · Beef: "+(l.beef||0)+" · Spicy: "+(l.spicy||0)+" · Total: "+(l.total||0)+" loyang";
+if(x.note)detail.textContent+=" · Catatan: "+x.note;card.appendChild(detail);
+if(admin){const btn=document.createElement("button");btn.className="danger";btn.textContent="Hapus transaksi";btn.onclick=()=>deleteTransaction(x.id);card.appendChild(btn);}
+root.appendChild(card);});
+if(!list.length)root.textContent="Belum ada riwayat pada filter ini.";
+}
+async function deleteTransaction(id){if(!id||!confirm("Yakin menghapus transaksi ini? Stok akan dikembalikan otomatis. Tindakan ini tidak dapat dibatalkan."))return;try{const d=await api("/transactions/"+encodeURIComponent(id),{method:"DELETE"});state=d.state;await kvSet("state",state);await renderAll();$("syncErrors").textContent="Transaksi dihapus; perubahan stok sudah dibatalkan.";showTab("history");}catch(e){alert("Gagal menghapus transaksi: "+e.message);}}
 function applyLocal(op){const p=op.payload;let changes={};if(op.type==="stock-in"){const total=(p.packs||0)*(p.perPack||0)+(p.extra||0);changes[p.item]=total;}else{const total=(p.ori||0)+(p.beef||0)+(p.spicy||0);if(p.custom?.enabled){changes={box3:-(p.custom.box3||0),box5outer:-(p.custom.box5||0),box5inner:-(p.custom.box5||0),paper:-(p.custom.paper||0)};}else{const use=total*2;changes={box3:-use,box5outer:-use,box5inner:-use,paper:-use};}}
 for(const [k,d] of Object.entries(changes)){if(!Number.isSafeInteger(d)||!Number.isSafeInteger(state.stock[k]+d)||state.stock[k]+d<0)throw Error("Stok lokal "+k+" tidak mencukupi.");}
 for(const [k,d] of Object.entries(changes))state.stock[k]+=d;
