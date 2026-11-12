@@ -222,6 +222,21 @@ app.get("/api/update/check", auth, async (req, res) => {
     res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
   } catch (e) { res.status(503).json({ error: e.message || "Gagal memeriksa pembaruan." }); }
 });
+app.get("/api/update/history", auth, (req, res) => {
+  try {
+    const raw = execFileSync("git", ["log", "-8", "--pretty=format:%h%x1f%s%x1f%cs"], {
+      cwd: REPO_DIR, encoding: "utf8", timeout: 5000
+    });
+    const commits = raw.split("\n").filter(Boolean).map(line => {
+      const [sha, message, date] = line.split("\x1f");
+      return { sha, message, date };
+    });
+    const pkg = JSON.parse(fs.readFileSync(path.join(REPO_DIR, "backend", "package.json"), "utf8"));
+    res.json({ version: pkg.version || "—", commits });
+  } catch (e) {
+    res.status(503).json({ error: "Riwayat perubahan belum dapat dibaca." });
+  }
+});
 app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
   try {
     const script = path.join(REPO_DIR, "scripts", "update-termux.sh");
