@@ -301,6 +301,11 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 </div>
 <h3>Keunggulan</h3>
 <ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li></ul>
+<h3>Commit terbaru dari GitHub</h3>
+<p class="hint">Lihat commit pada branch main. Admin dapat menerapkan commit terbaru setelah memastikan antrean transaksi sudah tersinkron.</p>
+<p id="latestCommitStatus" class="muted">Memuat commit terbaru…</p>
+<div id="latestCommitList"></div>
+<button id="applyLatestCommit" onclick="applyUpdate()" hidden>Terapkan commit terbaru</button>
 <h3>Riwayat perubahan versi</h3>
 <p class="hint">Daftar berikut diambil dari riwayat commit repository yang sedang terpasang. Setelah admin memasang pembaruan, buka kembali halaman ini untuk melihat perubahan yang ikut terpasang.</p>
 <p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
