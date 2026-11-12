@@ -326,6 +326,15 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 <div id="manual" class="tab panel hidden"><h2>Pengurangan stok manual</h2><p class="hint">Gunakan jika ada barang rusak, hilang, dipakai di luar produksi, atau koreksi stok. Masukkan alasan agar mudah dilacak.</p><label>Barang</label><select id="outItem"><option value="box3">Box isi 3</option><option value="box5outer">Box isi 5 luar / Slongsong</option><option value="box5inner">Box isi 5 dalam / Tatakan polos</option><option value="paper">Kertas Minyak</option><option value="mika">Mika roti roll</option></select><label>Jumlah yang dikurangi (pcs)</label><input id="outQuantity" type="number" min="1" step="1" placeholder="Contoh: 12"><label>Alasan pengurangan</label><textarea id="outReason" rows="2" placeholder="Contoh: 5 pcs rusak dan 7 pcs digunakan untuk sampel"></textarea><button class="danger" onclick="manualStockOut()">Kurangi stok</button><p id="outMsg" class="muted"></p></div><div id="history" class="tab panel hidden"><h2>Riwayat transaksi</h2><p class="hint">Admin dapat menghapus transaksi yang salah. Stok akan dikembalikan sesuai perubahan transaksi. Penghapusan membutuhkan koneksi server.</p><label>Filter riwayat</label><select id="historyFilter" onchange="renderHistory()"><option value="all">Semua transaksi</option><option value="production">Target produksi</option><option value="stock-in">Barang masuk</option><option value="stock-out">Pengurangan stok</option></select><div id="historyList"></div></div>
 <div id="about" class="tab panel hidden">
 <div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tentang INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Pusat informasi fitur, keunggulan, versi, dan catatan pembaruan aplikasi.</p></div><span id="aboutVersion" class="badge">Versi 2.0.0</span></div>
+<section class="history-card" id="backupPanel" hidden>
+<h3>🛡️ Cadangkan &amp; Pulihkan Data</h3>
+<p class="hint">Buat file khusus <b>.insanbackup</b> yang berisi stok, akun pengguna, transaksi, pengaturan, dan riwayat. Simpan file ini di tempat aman. Pemulihan akan mengganti database aktif sesuai isi file.</p>
+<button id="createBackupButton" onclick="downloadBackup()">⬇️ Buat file cadangan</button>
+<label for="backupFileInput">Pilih file cadangan INSAN (.insanbackup)</label>
+<input id="backupFileInput" type="file" accept=".insanbackup,application/json">
+<button class="danger" id="restoreBackupButton" onclick="restoreBackupFile()">Pulihkan data dari file</button>
+<p id="backupStatus" class="muted" aria-live="polite">Fitur ini hanya tersedia untuk admin saat terhubung ke server.</p>
+</section>
 <h3>Fitur aplikasi</h3>
 <div class="grid">
 <article class="history-card"><b>📦 Manajemen stok</b><p class="muted">Pantau jumlah persediaan setiap jenis barang dalam satu dashboard.</p></article>
