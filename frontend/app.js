@@ -24,7 +24,26 @@ function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Ob
 function toggleMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;const open=!nav.classList.contains("open");nav.classList.toggle("open",open);backdrop.classList.toggle("visible",open);btn.setAttribute("aria-expanded",String(open));btn.setAttribute("aria-label",open?"Tutup navigasi":"Buka navigasi");document.body.classList.toggle("nav-open",open);}
 function closeMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;nav.classList.remove("open");backdrop.classList.remove("visible");btn.setAttribute("aria-expanded","false");btn.setAttribute("aria-label","Buka navigasi");document.body.classList.remove("nav-open");}
 function syncActiveNav(){const current=document.querySelector(".tab:not(.hidden)");if(!current)return;document.querySelectorAll("#mainNav button[onclick^='showTab']").forEach(btn=>{const active=btn.getAttribute("onclick").includes("'"+current.id+"'");btn.classList.toggle("nav-active",active);if(active)btn.setAttribute("aria-current","page");else btn.removeAttribute("aria-current");});}
-function showTab(id){const target=$(id);if(!target)return;document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();}
+function showTab(id){const target=$(id);if(!target)return;document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();}
+async function loadAbout(){
+  const versionEl=$("aboutVersion"), list=$("changeLogList"), status=$("changeLogStatus");
+  if(!list)return;
+  try{
+    const data=await api("/update/history");
+    if(versionEl)versionEl.textContent="Versi "+(data.version||"—");
+    list.replaceChildren();
+    (data.commits||[]).forEach(item=>{
+      const card=document.createElement("article");card.className="history-card";
+      const title=document.createElement("b");title.textContent=item.message||"Pembaruan";
+      const meta=document.createElement("div");meta.className="muted";meta.textContent=(item.date||"")+(item.sha?" · "+item.sha:"");
+      card.append(title,meta);list.appendChild(card);
+    });
+    if(status)status.textContent="Riwayat perubahan dari repository lokal · menampilkan hingga 8 commit terakhir.";
+  }catch(e){
+    if(status)status.textContent="Riwayat perubahan belum tersedia. Hubungkan perangkat ke server lalu coba lagi.";
+    if(list.childElementCount===0){const p=document.createElement("p");p.className="muted";p.textContent="Belum dapat memuat riwayat perubahan.";list.appendChild(p);}
+  }
+}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();});
 function renderHistory(){
 const filter=$("historyFilter")?$("historyFilter").value:"all";
