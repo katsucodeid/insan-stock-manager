@@ -19,12 +19,55 @@ function showApp(){ $("login").classList.add("hidden");$("app").classList.remove
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
 async function logout(){token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
-async function renderAll(){if(!state)return;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();renderDailyTargets();await loadReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
+async function renderAll(){if(!state)return;const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=(cachedUser?.role||state.user?.role)!=="admin";syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();renderDailyTargets();await loadReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");}
 function toggleMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;const open=!nav.classList.contains("open");nav.classList.toggle("open",open);backdrop.classList.toggle("visible",open);btn.setAttribute("aria-expanded",String(open));btn.setAttribute("aria-label",open?"Tutup navigasi":"Buka navigasi");document.body.classList.toggle("nav-open",open);}
 function closeMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;nav.classList.remove("open");backdrop.classList.remove("visible");btn.setAttribute("aria-expanded","false");btn.setAttribute("aria-label","Buka navigasi");document.body.classList.remove("nav-open");}
 function syncActiveNav(){const current=document.querySelector(".tab:not(.hidden)");if(!current)return;document.querySelectorAll("#mainNav button[onclick^='showTab']").forEach(btn=>{const active=btn.getAttribute("onclick").includes("'"+current.id+"'");btn.classList.toggle("nav-active",active);if(active)btn.setAttribute("aria-current","page");else btn.removeAttribute("aria-current");});}
 function showTab(id){const target=$(id);if(!target)return;document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();}
+async function downloadBackup(){
+  const status=$("backupStatus"),button=$("createBackupButton");
+  if(!token||!navigator.onLine){if(status)status.textContent="Hubungkan perangkat ke server untuk membuat cadangan.";return;}
+  try{
+    if(button)button.disabled=true;
+    if(status)status.textContent="Menyiapkan file cadangan…";
+    const response=await fetch(API+"/api/admin/backup",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+    if(!response.ok){let data={};try{data=await response.json();}catch{}throw new Error(data.error||"Gagal membuat cadangan.");}
+    const blob=await response.blob();
+    const disposition=response.headers.get("Content-Disposition")||"";
+    const match=disposition.match(/filename="([^"]+)"/);
+    const filename=match?.[1]||("insan-backup-"+new Date().toISOString().slice(0,10)+".insanbackup");
+    const url=URL.createObjectURL(blob),link=document.createElement("a");
+    link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+    if(status)status.textContent="File cadangan berhasil dibuat: "+filename;
+  }catch(e){if(status)status.textContent="Gagal membuat cadangan: "+e.message;}
+  finally{if(button)button.disabled=false;}
+}
+async function restoreBackupFile(){
+  const input=$("backupFileInput"),status=$("backupStatus"),button=$("restoreBackupButton");
+  const file=input?.files?.[0];
+  if(!file){if(status)status.textContent="Pilih file .insanbackup terlebih dahulu.";return;}
+  if(!file.name.toLowerCase().endsWith(".insanbackup")){if(status)status.textContent="Ekstensi file harus .insanbackup.";return;}
+  if(file.size>25*1024*1024){if(status)status.textContent="Ukuran file melebihi batas 25 MB.";return;}
+  if(!token||!navigator.onLine){if(status)status.textContent="Pemulihan membutuhkan koneksi ke server.";return;}
+  let backup;
+  try{
+    backup=JSON.parse(await file.text());
+    if(backup?.format!=="INSAN-STOCK-BACKUP"||backup?.formatVersion!==1)throw new Error("Format file tidak dikenali sebagai cadangan INSAN.");
+  }catch(e){if(status)status.textContent="File tidak dapat dibaca: "+e.message;return;}
+  const confirmed=confirm("PERINGATAN: Pemulihan akan MENGGANTI seluruh data database aktif dengan data dari file ini, termasuk stok, akun, dan transaksi. Server juga membuat cadangan kondisi saat ini sebelum pemulihan. Lanjutkan?");
+  if(!confirmed)return;
+  try{
+    if(button)button.disabled=true;
+    if(status)status.textContent="Memeriksa file dan memulihkan database…";
+    const result=await api("/admin/restore",{method:"POST",body:JSON.stringify(backup)});
+    if(status)status.textContent="Pemulihan berhasil. Silakan login kembali. Pengguna: "+result.summary.users+" · Transaksi: "+result.summary.transactions;
+    localStorage.removeItem("insan_token");
+    token=null;
+    setTimeout(()=>location.reload(),1200);
+  }catch(e){if(status)status.textContent="Pemulihan dibatalkan: "+e.message;}
+  finally{if(button)button.disabled=false;}
+}
 async function loadAbout(){
   const versionEl=$("aboutVersion"), list=$("changeLogList"), status=$("changeLogStatus");
   const remoteList=$("latestCommitList"), remoteStatus=$("latestCommitStatus"), applyBtn=$("applyLatestCommit");
