@@ -63,7 +63,7 @@ function adminOnly(req, res, next) {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Khusus admin." });
   next();
 }
-function int(value, label) {
+function recordAudit(user, action, details = {}) {\n  db.auditLog ||= [];\n  db.auditLog.push({ id: require("crypto").randomUUID(), at: new Date().toISOString(), username: user?.username || "system", role: user?.role || "system", action, details });\n  if (db.auditLog.length > 10000) db.auditLog = db.auditLog.slice(-10000);\n}\nfunction int(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) throw new Error(label + " harus bilangan bulat nol atau lebih.");
   return value;
 }
@@ -131,7 +131,7 @@ async function applyOperation(op, username) {
     location: parsed.location, note: parsed.note, lines: parsed.lines, changes: parsed.changes,
     createdBy: username, createdAt: new Date().toISOString()
   });
-  db.processed.push(op.id);
+  recordAudit({ username, role: db.users.find(u => u.username === username)?.role || "staff" }, "transaction.create", { id: op.id, type: op.type, date: parsed.date, location: parsed.location });\n  db.processed.push(op.id);
   if (db.processed.length > 5000) db.processed = db.processed.slice(-5000);
   return { id: op.id, accepted: true };
 }
@@ -141,7 +141,7 @@ app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body || {};
   const user = db.users.find(x => x.username === username);
   if (!user || !(await bcrypt.compare(password || "", user.passwordHash))) return res.status(401).json({ error: "Username atau password salah." });
-  const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "30d" });
+  recordAudit({ username: user.username, role: user.role }, "auth.login");\n  await persist();\n  const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "30d" });
   res.json({ token, user: { username: user.username, role: user.role } });
 });
 app.get("/api/state", auth, (req, res) => res.json(snapshot(req.user)));
@@ -178,7 +178,7 @@ app.put("/api/transactions/:id", auth, async (req, res) => {
         deltas[key] = delta;
       }
       for (const [key, delta] of Object.entries(deltas)) db.stock[key] += delta;
-      db.transactions[index] = { ...oldTx, date: parsed.date || oldTx.date, location: parsed.location, note: parsed.note, lines: parsed.lines, changes: nextChanges, updatedAt: new Date().toISOString(), updatedBy: req.user.username };
+      db.transactions[index] = { ...oldTx, date: parsed.date || oldTx.date, location: parsed.location, note: parsed.note, lines: parsed.lines, changes: nextChanges, updatedAt: new Date().toISOString(), updatedBy: req.user.username };\n      recordAudit(req.user, "transaction.update", { id: oldTx.id, type: oldTx.type });
       await persist();
       return { ok: true, state: snapshot(req.user) };
     });
@@ -195,7 +195,7 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
         if (!Object.hasOwn(itemDefs, key) || !Number.isSafeInteger(delta) || !Number.isSafeInteger(db.stock[key] - delta) || db.stock[key] - delta < 0) throw new Error("Pembatalan transaksi tidak aman. Periksa stok terlebih dahulu.");
       }
       for (const [key, delta] of Object.entries(tx.changes || {})) db.stock[key] -= delta;
-      db.transactions.splice(index, 1);
+      db.transactions.splice(index, 1);\n      recordAudit(req.user, "transaction.delete", { id: tx.id, type: tx.type });
       db.processed = db.processed.filter(id => id !== tx.id);
       await persist();
       return { ok: true, state: snapshot(req.user) };
@@ -237,7 +237,7 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   if (!username || !password || password.length < 10 || !["admin", "staff"].includes(role)) return res.status(400).json({ error: "Username, password minimal 10 karakter, dan role valid wajib diisi." });
   const result = await locked(async () => {
     if (db.users.some(x => x.username === username)) throw new Error("Username sudah digunakan.");
-    db.users.push({ id: require("crypto").randomUUID(), username, passwordHash: await bcrypt.hash(password, 12), role });
+    db.users.push({ id: require("crypto").randomUUID(), username, passwordHash: await bcrypt.hash(password, 12), role });\n    recordAudit(req.user, "user.create", { username, role });
     await persist();
   });
   res.json({ ok: true, username, role });
