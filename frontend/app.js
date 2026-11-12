@@ -27,6 +27,7 @@ function syncActiveNav(){const current=document.querySelector(".tab:not(.hidden)
 function showTab(id){const target=$(id);if(!target)return;document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();}
 async function loadAbout(){
   const versionEl=$("aboutVersion"), list=$("changeLogList"), status=$("changeLogStatus");
+  const remoteList=$("latestCommitList"), remoteStatus=$("latestCommitStatus"), applyBtn=$("applyLatestCommit");
   if(!list)return;
   try{
     const data=await api("/update/history");
@@ -38,12 +39,46 @@ async function loadAbout(){
       const meta=document.createElement("div");meta.className="muted";meta.textContent=(item.date||"")+(item.sha?" · "+item.sha:"");
       card.append(title,meta);list.appendChild(card);
     });
-    if(status)status.textContent="Riwayat perubahan dari repository lokal · menampilkan hingga 8 commit terakhir.";
+    if(status)status.textContent="Riwayat commit yang sudah terpasang · hingga 8 commit terakhir.";
   }catch(e){
-    if(status)status.textContent="Riwayat perubahan belum tersedia. Hubungkan perangkat ke server lalu coba lagi.";
-    if(list.childElementCount===0){const p=document.createElement("p");p.className="muted";p.textContent="Belum dapat memuat riwayat perubahan.";list.appendChild(p);}
+    if(status)status.textContent="Riwayat lokal belum tersedia: "+e.message;
+  }
+  try{
+    const remote=await api("/update/commits");
+    const commits=remote.commits||[];
+    window.insanLatestCommit=commits[0]?.sha||null;
+    window.insanUpdateAvailable=!!(window.insanLatestCommit&&window.insanLatestCommit!==remote.current&&(cachedUser?.role||state?.user?.role)==="admin");
+    if(remoteList)remoteList.replaceChildren();
+    commits.forEach((item,index)=>{
+      if(!remoteList)return;
+      const card=document.createElement("article");card.className="history-card";
+      const title=document.createElement("b");title.textContent=item.message||"Pembaruan";
+      const meta=document.createElement("div");meta.className="muted";
+      const date=item.date?new Date(item.date).toLocaleString("id-ID"):"Tanggal tidak tersedia";
+      meta.textContent=date+" · "+(item.author||"Kontributor")+" · "+item.shortSha+(item.sha===remote.current?" · Terpasang":"");
+      card.append(title,meta);
+      if(index===0&&item.sha!==remote.current){
+        const tag=document.createElement("p");tag.className="muted";tag.textContent="Commit terbaru pada branch main";
+        card.appendChild(tag);
+      }
+      remoteList.appendChild(card);
+    });
+    if(remoteStatus)remoteStatus.textContent=commits.length
+      ?(remote.current===commits[0].sha?"Aplikasi sudah berada pada commit terbaru.":"Ditemukan "+commits.length+" commit terbaru dari GitHub.")
+      :"Belum ada commit yang dapat ditampilkan.";
+    if(applyBtn){
+      const admin=(cachedUser?.role||state?.user?.role)==="admin";
+      applyBtn.hidden=!admin||!window.insanUpdateAvailable;
+      applyBtn.disabled=!window.insanUpdateAvailable;
+      applyBtn.textContent=window.insanUpdateAvailable?"Terapkan commit terbaru":"Sudah menggunakan commit terbaru";
+    }
+  }catch(e){
+    window.insanLatestCommit=null;window.insanUpdateAvailable=false;
+    if(remoteStatus)remoteStatus.textContent="Gagal mengambil commit dari GitHub: "+e.message;
+    if(applyBtn)applyBtn.hidden=true;
   }
 }
+
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();});
 function renderHistory(){
 const filter=$("historyFilter")?$("historyFilter").value:"all";
@@ -110,8 +145,8 @@ line.append(name,qty);card.appendChild(line);
 box.appendChild(card);
 });
 }
-async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d=await api("/update/check");if(d.available){$("updateNotice").classList.remove("hidden");$("updateTitle").textContent="Pembaruan INSAN tersedia";const admin=(cachedUser?.role||state?.user?.role)==="admin";$("updateMessage").textContent=d.message+(admin?" · Tekan tombol untuk memperbarui.":" · Hubungi admin untuk memasang pembaruan.");$("updateButton").hidden=!admin;window.insanUpdateAvailable=admin;}else{$("updateNotice").classList.add("hidden");window.insanUpdateAvailable=false;}}catch(e){/* update check is optional while offline */}}
-async function applyUpdate(){if(!window.insanUpdateAvailable)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Perbarui aplikasi dari GitHub sekarang? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const r=await fetch(API+"/api/health",{cache:"no-store"});if(r.ok){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=90)clearInterval(watcher);},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
+async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d=await api("/update/check");if(d.available){window.insanLatestCommit=d.latest;window.insanUpdateAvailable=(cachedUser?.role||state?.user?.role)==="admin";$("updateNotice").classList.remove("hidden");$("updateTitle").textContent="Pembaruan INSAN tersedia";const admin=(cachedUser?.role||state?.user?.role)==="admin";$("updateMessage").textContent=d.message+(admin?" · Tekan tombol untuk memperbarui.":" · Hubungi admin untuk memasang pembaruan.");$("updateButton").hidden=!admin;window.insanUpdateAvailable=admin;}else{$("updateNotice").classList.add("hidden");window.insanUpdateAvailable=false;window.insanLatestCommit=null;}}catch(e){/* update check is optional while offline */}}
+async function applyUpdate(commitSha=window.insanLatestCommit){if(!window.insanUpdateAvailable||!commitSha)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Terapkan commit "+commitSha.slice(0,7)+" dari GitHub? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({commitSha})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const r=await fetch(API+"/api/health",{cache:"no-store"});if(r.ok){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=90)clearInterval(watcher);},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
 async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
 async function loadReport(){if(!state)return;const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");$("reportText").value=`*INSAN*:
 Box isi 3 : ${fmt(s.box3)}pcs
