@@ -243,6 +243,8 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   res.json({ ok: true, username, role });
 });
 
+require("./management")(app, { auth, adminOnly, locked, persist, getDb: () => db, setDb: value => { db = value; }, dataDir: DATA_DIR, dataFile: DATA_FILE, itemDefs });
+
 // Serve repository-level logo and image assets from /img/*.
 app.use("/img", express.static(path.join(REPO_DIR, "img"), { fallthrough: false, maxAge: "7d" }));
 app.use(express.static(FRONTEND_DIR, { extensions: ["html"] }));
