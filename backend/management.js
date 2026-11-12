@@ -8,6 +8,74 @@ module.exports = function registerManagementRoutes(app, ctx) {
     db.auditLog.push({ id: crypto.randomUUID(), at: new Date().toISOString(), username: user?.username || "system", role: user?.role || "system", action, details });
     if (db.auditLog.length > 10000) db.auditLog = db.auditLog.slice(-10000);
   };
+  const makeBackup = database => {
+    const serialized = JSON.stringify(database);
+    return {
+      format: "INSAN-STOCK-BACKUP",
+      formatVersion: 1,
+      app: "INSAN Stock Manager",
+      createdAt: new Date().toISOString(),
+      checksum: crypto.createHash("sha256").update(serialized).digest("hex"),
+      database
+    };
+  };
+  app.get("/api/admin/backup", auth, adminOnly, (req, res) => {
+    try {
+      const backup = makeBackup(getDb());
+      res.setHeader("Content-Disposition", 'attachment; filename="insan-backup-' + new Date().toISOString().replace(/[:.]/g, "-") + '.insanbackup"');
+      res.setHeader("Content-Type", "application/vnd.insan.stock-backup+json; charset=utf-8");
+      res.json(backup);
+    } catch (e) {
+      res.status(500).json({ error: "Gagal membuat file cadangan: " + e.message });
+    }
+  });
+  app.post("/api/admin/restore", auth, adminOnly, async (req, res) => {
+    try {
+      const backup = req.body;
+      if (!backup || backup.format !== "INSAN-STOCK-BACKUP" || backup.formatVersion !== 1 || !backup.database || typeof backup.database !== "object" || Array.isArray(backup.database)) {
+        throw new Error("Format file bukan cadangan INSAN yang didukung.");
+      }
+      const database = backup.database;
+      if (!database.stock || typeof database.stock !== "object" || Array.isArray(database.stock) ||
+          !Array.isArray(database.users) || !Array.isArray(database.transactions) || !Array.isArray(database.processed)) {
+        throw new Error("Struktur database di dalam file cadangan tidak lengkap.");
+      }
+      for (const key of Object.keys(itemDefs)) {
+        if (!Number.isSafeInteger(database.stock[key]) || database.stock[key] < 0) {
+          throw new Error("Nilai stok " + itemDefs[key].label + " tidak valid. Data aktif tidak diubah.");
+        }
+      }
+      const expected = crypto.createHash("sha256").update(JSON.stringify(database)).digest("hex");
+      if (typeof backup.checksum !== "string" || backup.checksum !== expected) {
+        throw new Error("Checksum tidak cocok. File rusak atau telah diubah; pemulihan dibatalkan.");
+      }
+      const result = await locked(async () => {
+        const previous = getDb();
+        const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const safetyPath = require("path").join(process.env.DATA_DIR || require("path").join(__dirname, "data"), "pre-restore-" + stamp + ".insanbackup");
+        await require("fs").promises.writeFile(safetyPath, JSON.stringify(makeBackup(previous), null, 2), { mode: 0o600, flag: "wx" });
+        try {
+          database.stock = { ...database.stock };
+          database.users = database.users.slice();
+          database.transactions = database.transactions.slice();
+          database.processed = database.processed.slice();
+          ctx.setDb(database);
+          await persist();
+        } catch (e) {
+          ctx.setDb(previous);
+          throw e;
+        }
+        return {
+          users: database.users.length,
+          transactions: database.transactions.length,
+          stock: database.stock
+        };
+      });
+      res.json({ ok: true, message: "Pemulihan berhasil. Cadangan kondisi sebelum pemulihan juga disimpan di folder database.", summary: result });
+    } catch (e) {
+      res.status(400).json({ error: e.message || "Pemulihan gagal. Database aktif tidak diubah." });
+    }
+  });
   app.get("/api/admin/settings", auth, adminOnly, (req, res) => {
     const settings = getDb().settings || {};
     res.json({ minStock: { ...(settings.minStock || {}) } });
