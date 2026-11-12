@@ -189,6 +189,6 @@ async function toggleWorkAlarm(){const input=$("workStartTime"),start=input.valu
 function stopWorkAlarm(){localStorage.removeItem(WORK_ALARM_KEY);if(workAlarmTimer)clearTimeout(workAlarmTimer);workAlarmTimer=null;stopAlarmSound();renderWorkAlarm();}
 function scheduleWorkAlarm(){if(workAlarmTimer)clearTimeout(workAlarmTimer);const saved=JSON.parse(localStorage.getItem(WORK_ALARM_KEY)||"null");if(!saved?.enabled)return;const delay=new Date(saved.fireAt).getTime()-Date.now();if(delay<=0){localStorage.removeItem(WORK_ALARM_KEY);playGentleAlarm();return;}workAlarmTimer=setTimeout(()=>{localStorage.removeItem(WORK_ALARM_KEY);playGentleAlarm();renderWorkAlarm();},delay);}
 if($("workStartTime")){$("workStartTime").addEventListener("input",()=>{$("workEndTime").textContent=alarmEndTime($("workStartTime").value)+" WIB";});renderWorkAlarm();scheduleWorkAlarm();document.addEventListener("visibilitychange",()=>{if(!document.hidden)scheduleWorkAlarm();});}
-\nwindow.addEventListener("offline",()=>setStatus("Offline · tetap bisa mencatat stok","low"));
+window.addEventListener("offline",()=>setStatus("Offline · tetap bisa mencatat stok","low"));
 setInterval(checkForUpdates,300000);
 (async()=>{cachedUser=await kvGet("user");if(token||cachedUser)await refresh();else showLogin();if(!navigator.onLine)setStatus("Offline","low");})();
