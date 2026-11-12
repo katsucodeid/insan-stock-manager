@@ -1,73 +1,13 @@
-const fs = require("fs");
-const path = require("path");
 const crypto = require("crypto");
 
 module.exports = function registerManagementRoutes(app, ctx) {
-  const { auth, adminOnly, locked, persist, getDb, dataDir, dataFile, itemDefs } = ctx;
-  const backupDir = path.join(dataDir, "backups");
+  const { auth, adminOnly, locked, persist, getDb, itemDefs } = ctx;
   const audit = async (user, action, details = {}) => {
     const db = getDb();
     db.auditLog ||= [];
     db.auditLog.push({ id: crypto.randomUUID(), at: new Date().toISOString(), username: user?.username || "system", role: user?.role || "system", action, details });
     if (db.auditLog.length > 10000) db.auditLog = db.auditLog.slice(-10000);
   };
-  const safeDb = value => value && typeof value === "object" && !Array.isArray(value)
-    && value.stock && typeof value.stock === "object"
-    && Array.isArray(value.users) && Array.isArray(value.transactions) && Array.isArray(value.processed)
-    && Object.keys(itemDefs).every(k => Number.isSafeInteger(value.stock[k]) && value.stock[k] >= 0)
-    && value.users.every(u => u && typeof u.username === "string" && typeof u.passwordHash === "string");
-  const makeBackup = async reason => {
-    await fs.promises.mkdir(backupDir, { recursive: true, mode: 0o700 });
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const file = path.join(backupDir, "insan-" + stamp + "-" + reason + ".json");
-    await fs.promises.copyFile(dataFile, file, fs.constants.COPYFILE_EXCL);
-    await fs.promises.chmod(file, 0o600);
-    return { name: path.basename(file), size: (await fs.promises.stat(file)).size, createdAt: new Date().toISOString() };
-  };
-
-  app.get("/api/admin/backups", auth, adminOnly, async (req, res) => {
-    try {
-      await fs.promises.mkdir(backupDir, { recursive: true, mode: 0o700 });
-      const names = (await fs.promises.readdir(backupDir)).filter(n => /^insan-[\w.-]+\.json$/.test(n));
-      const files = await Promise.all(names.map(async name => { const s = await fs.promises.stat(path.join(backupDir, name)); return { name, size: s.size, modifiedAt: s.mtime.toISOString() }; }));
-      files.sort((a,b) => b.modifiedAt.localeCompare(a.modifiedAt));
-      res.json({ backups: files });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  });
-  app.post("/api/admin/backups", auth, adminOnly, async (req, res) => {
-    try {
-      const result = await locked(async () => { const b = await makeBackup("manual"); await audit(req.user, "backup.create", { name: b.name }); await persist(); return b; });
-      res.json({ ok: true, backup: result });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-  });
-  app.get("/api/admin/backups/:name/download", auth, adminOnly, async (req, res) => {
-    const name = path.basename(req.params.name);
-    if (name !== req.params.name || !/^insan-[\w.-]+\.json$/.test(name)) return res.status(400).json({ error: "Nama backup tidak valid." });
-    const file = path.join(backupDir, name);
-    if (!fs.existsSync(file)) return res.status(404).json({ error: "Backup tidak ditemukan." });
-    res.download(file, name);
-  });
-  app.post("/api/admin/backups/restore", auth, adminOnly, async (req, res) => {
-    const name = String(req.body?.name || "");
-    if (path.basename(name) !== name || !/^insan-[\w.-]+\.json$/.test(name)) return res.status(400).json({ error: "Nama backup tidak valid." });
-    try {
-      const result = await locked(async () => {
-        const source = path.join(backupDir, name);
-        const parsed = JSON.parse(await fs.promises.readFile(source, "utf8"));
-        if (!safeDb(parsed)) throw new Error("Struktur backup tidak valid atau tidak kompatibel. Database aktif tidak diubah.");
-        const before = await makeBackup("before-restore");
-        const current = getDb();
-        parsed.settings = { ...(current.settings || {}), ...(parsed.settings || {}) };
-        parsed.auditLog = Array.isArray(parsed.auditLog) ? parsed.auditLog : [];
-        parsed.auditLog.push({ id: crypto.randomUUID(), at: new Date().toISOString(), username: req.user.username, role: req.user.role, action: "backup.restore", details: { source: name, safetyBackup: before.name } });
-        ctx.setDb(parsed);
-        await persist();
-        return { ok: true, safetyBackup: before.name };
-      });
-      res.json(result);
-    } catch (e) { res.status(400).json({ error: e.message }); }
-  });
-
   app.get("/api/admin/settings", auth, adminOnly, (req, res) => {
     const settings = getDb().settings || {};
     res.json({ minStock: { ...(settings.minStock || {}) } });
