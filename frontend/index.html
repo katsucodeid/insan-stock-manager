@@ -257,8 +257,24 @@ header>.header-actions{order:2;flex:0 0 auto;margin-left:auto}
 header .brand-logo{object-fit:contain;display:block}
 @media(max-width:390px){header{gap:8px!important}header>.menu-toggle{flex-basis:40px}header>.header-actions button{padding:8px}}
 
+
+/* Final polish: compact content header, live clock and precise drawer controls */
+main{padding-top:4px!important}
+#connection{margin:5px auto 8px!important;padding:7px 12px!important;min-height:0}
+#app>.row{padding:2px 2px!important;margin:0 0 5px!important}
+#syncErrors{margin:0 0 5px!important;min-height:0}
+.tab.panel{margin-top:6px!important}
+header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!important}
+.clock-chip{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:1px;min-width:84px;padding:5px 9px;border:1px solid var(--line);border-radius:11px;background:var(--panel);font-variant-numeric:tabular-nums;line-height:1.15}
+.clock-chip strong{font-size:16px;letter-spacing:.04em;color:var(--accent)}
+.clock-chip small{font-size:10px;white-space:nowrap}
+.tabs .nav-close{display:grid!important;place-items:center!important;align-content:center!important;justify-content:center!important;text-align:center!important;line-height:1!important;font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:400!important;padding:0!important;transform:none!important;flex:0 0 40px!important}
+#app:has(.tab:not(.hidden)) #mainNav button:not(.nav-active){background:transparent!important;border-color:transparent!important;color:var(--text)!important}
+#app #mainNav button.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#321809!important;font-weight:800!important}
+@media(max-width:390px){.clock-chip{min-width:70px;padding:4px 6px}.clock-chip strong{font-size:14px}.clock-chip small{font-size:9px}header{min-height:58px!important}}
+
 </style></head><body>
-<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris & produksi</div></div></div><div class="header-actions"><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
+<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris & produksi</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
 <section id="login" class="panel"><h2>Masuk</h2><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
