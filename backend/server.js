@@ -39,9 +39,14 @@ function freshDb() {
 }
 async function persist() {
   await fs.promises.mkdir(DATA_DIR, { recursive: true });
-  const tmp = DATA_FILE + ".tmp";
-  await fs.promises.writeFile(tmp, JSON.stringify(db, null, 2), { mode: 0o600 });
-  await fs.promises.rename(tmp, DATA_FILE);
+  // Unique temporary file prevents concurrent saves from overwriting one another.
+  const tmp = DATA_FILE + "." + process.pid + "." + require("crypto").randomUUID() + ".tmp";
+  try {
+    await fs.promises.writeFile(tmp, JSON.stringify(db, null, 2), { mode: 0o600, flag: "wx" });
+    await fs.promises.rename(tmp, DATA_FILE);
+  } finally {
+    await fs.promises.rm(tmp, { force: true }).catch(() => {});
+  }
 }
 async function locked(fn) {
   const run = writeQueue.then(fn, fn);
@@ -303,8 +308,17 @@ app.get("*", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "index.html")));
 
 async function start() {
   await fs.promises.mkdir(DATA_DIR, { recursive: true });
-  try { db = JSON.parse(await fs.promises.readFile(DATA_FILE, "utf8")); }
-  catch { db = freshDb(); }
+  try {
+    db = JSON.parse(await fs.promises.readFile(DATA_FILE, "utf8"));
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      db = freshDb();
+      console.log("Database belum ada; membuat database awal.");
+    } else {
+      // Never silently replace an unreadable or invalid existing database.
+      throw new Error("Database gagal dibaca; data lama tidak akan ditimpa: " + err.message);
+    }
+  }
   db.stock = { ...initialStock, ...(db.stock || {}) };
   // One-time migration: replace only the untouched legacy opening balances.
   // Never overwrite a live inventory or any database with recorded transactions.
