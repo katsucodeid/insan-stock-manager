@@ -222,6 +222,29 @@ app.get("/api/update/check", auth, async (req, res) => {
     res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
   } catch (e) { res.status(503).json({ error: e.message || "Gagal memeriksa pembaruan." }); }
 });
+app.get("/api/update/commits", auth, async (req, res) => {
+  try {
+    const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits?sha=main&per_page=10", {
+      headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" }
+    });
+    if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
+    const rows = await response.json();
+    const current = execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_DIR, encoding: "utf8" }).trim();
+    res.json({
+      current,
+      commits: rows.map(item => ({
+        sha: item.sha,
+        shortSha: item.sha.slice(0, 7),
+        message: item.commit?.message?.split("\n")[0] || "Pembaruan",
+        date: item.commit?.committer?.date || item.commit?.author?.date || null,
+        author: item.commit?.author?.name || "Kontributor",
+        current: item.sha === current
+      }))
+    });
+  } catch (e) {
+    res.status(503).json({ error: e.message || "Gagal mengambil commit terbaru." });
+  }
+});
 app.get("/api/update/history", auth, (req, res) => {
   try {
     const raw = execFileSync("git", ["log", "-8", "--pretty=format:%h%x1f%s%x1f%cs"], {
@@ -241,7 +264,9 @@ app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
   try {
     const script = path.join(REPO_DIR, "scripts", "update-termux.sh");
     if (!fs.existsSync(script)) throw new Error("Skrip pembaruan tidak ditemukan. Perbarui repository secara manual.");
-    const child = spawn("bash", [script, String(process.pid)], { cwd: REPO_DIR, detached: true, stdio: "ignore" });
+    const commitSha = String(req.body?.commitSha || "").trim();
+    if (!/^[a-f0-9]{40}$/i.test(commitSha)) return res.status(400).json({ error: "Commit SHA tidak valid." });
+    const child = spawn("bash", [script, String(process.pid), commitSha], { cwd: REPO_DIR, detached: true, stdio: "ignore" });
     child.unref();
     res.json({ ok: true, message: "Pembaruan dimulai. Server akan berhenti sebentar dan hidup kembali otomatis." });
   } catch (e) { res.status(500).json({ error: e.message }); }
