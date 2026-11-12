@@ -17,7 +17,7 @@ const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/termux-install.sh."); process.exit(1); }
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "25mb" }));
 
 const itemDefs = {
   box3: { label: "Box isi 3", min: null },
@@ -299,7 +299,7 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   res.json({ ok: true, username, role });
 });
 
-require("./management")(app, { auth, adminOnly, locked, persist, getDb: () => db, itemDefs });
+require("./management")(app, { auth, adminOnly, locked, persist, getDb: () => db, setDb: value => { db = value; }, itemDefs });
 
 // Serve repository-level logo and image assets from /img/*.
 app.use("/img", express.static(path.join(REPO_DIR, "img"), { fallthrough: false, maxAge: "7d" }));
