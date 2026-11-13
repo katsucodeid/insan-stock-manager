@@ -338,6 +338,26 @@ button.danger{background:#b9382d;color:#fff}
  .login-brand img{width:60px;height:60px}
 }
 
+
+
+/* Navigasi ringkas berkelompok + rapatkan area atas */
+.tabs{gap:10px!important;padding:16px 16px max(20px,env(safe-area-inset-bottom))!important}
+.tabs .nav-drawer-head{padding-bottom:12px;margin-bottom:2px}
+.tabs .nav-group{border:1px solid #efd9c1;border-radius:13px;background:#fffaf4;overflow:hidden}
+.tabs .nav-group>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:11px 12px;cursor:pointer;list-style:none;color:#8f3514;font-size:11px;font-weight:850;letter-spacing:.08em}
+.tabs .nav-group>summary::-webkit-details-marker{display:none}
+.tabs .nav-group>summary::after{content:"＋";font-size:15px;color:#a87550;line-height:1}
+.tabs .nav-group[open]>summary::after{content:"−"}
+.tabs .nav-group[open]>summary{border-bottom:1px solid #f0ddca;background:#fff2e5}
+.tabs .nav-group>button{display:block;width:calc(100% - 12px);min-height:40px;margin:5px 6px;padding:9px 12px;border-radius:10px;text-align:left;font-size:13px}
+.tabs .nav-group>button:last-child{margin-bottom:7px}
+.tabs .nav-group>button.nav-active{background:#bd4e1c!important;border-color:#bd4e1c!important;color:#fff!important}
+header{min-height:54px!important;padding-top:5px!important;padding-bottom:5px!important}
+header .brand-logo{width:46px!important;height:46px!important}
+main{padding-top:0!important}
+#connection{margin-top:2px!important;margin-bottom:5px!important;padding-top:6px!important;padding-bottom:6px!important}
+#app>.row{margin-top:0!important;padding-top:0!important}
+@media(max-width:640px){header{min-height:52px!important;padding-block:4px!important}.brand-logo{width:42px!important;height:42px!important}.tabs{padding-top:13px!important}}
 </style></head><body>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
@@ -345,7 +365,12 @@ button.danger{background:#b9382d;color:#fff}
 <section id="login" class="panel"><div class="login-brand"><img src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
 <div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
-<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
+<nav class="tabs" id="mainNav" aria-label="Navigasi utama">
+<div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div>
+<details class="nav-group"><summary>▦ &nbsp; RINGKASAN</summary><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button></details>
+<details class="nav-group"><summary>⚙ &nbsp; OPERASIONAL</summary><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button></details>
+<details class="nav-group"><summary>▤ &nbsp; DATA &amp; LAPORAN</summary><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></details>
+</nav>
 <div id="alarm" class="tab panel hidden">
 <style>
 #alarm .alarm-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:14px;margin:12px 0}
