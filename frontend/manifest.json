@@ -1,13 +1,13 @@
 {
   "id": "./",
-  "name": "INSAN Stock Manager",
-  "short_name": "INSAN Stock",
-  "description": "Aplikasi inventaris offline-first",
+  "name": "Abon Gulung Gembul - Stok Kertas",
+  "short_name": "Gembul Stok",
+  "description": "Sistem persediaan kertas, produksi, dan operasional Abon Gulung Gembul.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#101827",
+  "background_color": "#fff8ef",
+  "theme_color": "#bd4e1c",
   "orientation": "portrait",
   "icons": [
     {
