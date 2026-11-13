@@ -1,4 +1,4 @@
-# INSAN Stock Manager
+# Abon Gulung Gembul - Stok Kertas
 
 Aplikasi stok offline-first untuk Termux Android. Tidak memakai Render dan tidak wajib memakai MongoDB.
 
