@@ -313,6 +313,14 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 <div class="alarm-section-head"><h3>🎵 Semua nada</h3><span class="alarm-note">Pilih nama untuk melihat kontrol</span></div>
 <div class="tone-tools"><input id="alarmToneSearch" type="search" placeholder="Cari nada dering…" aria-label="Cari nada dering"><select id="alarmToneFilter" aria-label="Filter nada"><option value="all">Semua nada</option><option value="downloaded">Sudah diunduh</option><option value="available">Belum diunduh</option></select></div>
 <div id="alarmToneLibrary" class="tone-list"></div>
+<div class="alarm-section-head"><h3>🎭 Nada lucu dari Pixabay</h3><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Buka Pixabay ↗</a></div>
+<p class="alarm-note">Pilih suara di Pixabay lalu tekan Free Download. Setelah file tersimpan, impor melalui pemilih file di bawah untuk menggunakannya sebagai nada alarm.</p>
+<div class="tone-list">
+<article class="tone-row"><div class="tone-name">Funny Alarm <span class="tone-sub">Alarm kartun lucu · Efecto Fundador</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-funny-alarm-75649/" target="_blank" rel="noopener">Unduh ↗</a></article>
+<article class="tone-row"><div class="tone-name">Alarm &amp; Notification <span class="tone-sub">Efek notifikasi singkat</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-notification-20-270145/" target="_blank" rel="noopener">Unduh ↗</a></article>
+<article class="tone-row"><div class="tone-name">Koleksi alarm lucu lainnya</div><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Lihat daftar ↗</a></article>
+</div>
+<label for="customAlarmToneFile">Impor nada dari perangkat (MP3/WAV/OGG/M4A/AAC)</label><input id="customAlarmToneFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac">
 <div class="alarm-section-head"><h3>⬇ Nada tersimpan di perangkat</h3><span class="alarm-note" id="downloadedToneSummary">0 nada</span></div>
 <p class="alarm-note">Nada tersimpan pada penyimpanan browser perangkat ini. Hindari menghapus data situs agar nada tetap tersedia.</p><div id="downloadedAlarmTones" class="tone-list"></div>
 <div class="alarm-section-head"><h3>🧪 Uji alarm</h3></div><p class="alarm-note">Tes bunyi dalam 1, 2, atau 3 menit tanpa mengubah jadwal kerja.</p>
@@ -331,7 +339,7 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 <p class="hint">Buat file khusus <b>.insanbackup</b> yang berisi stok, akun pengguna, transaksi, pengaturan, dan riwayat. Simpan file ini di tempat aman. Pemulihan akan mengganti database aktif sesuai isi file.</p>
 <button id="createBackupButton" onclick="downloadBackup()">⬇️ Buat file cadangan</button>
 <label for="backupFileInput">Pilih file cadangan INSAN (.insanbackup)</label>
-<input id="backupFileInput" type="file" accept=".insanbackup,application/json">
+<input id="backupFileInput" type="file" accept=".insanbackup,application/json" style="display:block;width:100%;min-height:48px;padding:10px;opacity:1;pointer-events:auto">
 <button class="danger" id="restoreBackupButton" onclick="restoreBackupFile()">Pulihkan data dari file</button>
 <p id="backupStatus" class="muted" aria-live="polite">Fitur ini hanya tersedia untuk admin saat terhubung ke server.</p>
 </section>
