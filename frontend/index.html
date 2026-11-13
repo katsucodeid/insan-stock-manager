@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101827"><meta name="description" content="Aplikasi inventaris offline-first INSAN"><title>INSAN Stock Manager</title><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#a94716"><meta name="description" content="Abon Gulung Gembul - Stok Kertas: sistem persediaan, produksi, dan operasional."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
 <style>
 :root{font-family:system-ui,Arial;color-scheme:dark;--bg:#24130e;--panel:#3a2118;--text:#fff3dc;--muted:#d0b69c;--line:#67402c;--accent:#f59a18;--danger:#df5544}
 :root.light{color-scheme:light;--bg:#fff5e6;--panel:#fffdf8;--text:#3b2117;--muted:#80634e;--line:#ead4b9;--accent:#d97908;--danger:#c93636}
@@ -273,14 +273,79 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 #app #mainNav button.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#321809!important;font-weight:800!important}
 @media(max-width:390px){.clock-chip{min-width:70px;padding:4px 6px}.clock-chip strong{font-size:14px}.clock-chip small{font-size:9px}header{min-height:58px!important}}
 
+
+/* Rebuild visual identity v2 · Abon Gulung Gembul - Stok Kertas */
+:root{
+ --bg:#fff8ef;--panel:#ffffff;--text:#382014;--muted:#866b58;--line:#f0ddca;
+ --accent:#bd4e1c;--danger:#b9382d;color-scheme:light;
+ --brand-orange:#bd4e1c;--brand-gold:#f2ad42;--brand-cream:#fff8ef;--brand-ink:#382014;
+}
+:root.light{--bg:#fff8ef;--panel:#ffffff;--text:#382014;--muted:#866b58;--line:#f0ddca;--accent:#bd4e1c;--danger:#b9382d;color-scheme:light}
+body{background:linear-gradient(180deg,#fff0d9 0,#fff8ef 270px,#fff8ef 100%);color:var(--text)}
+header{max-width:1200px;min-height:86px;padding:14px clamp(14px,3vw,34px);border:0;background:rgba(255,248,239,.92);box-shadow:0 8px 30px rgba(104,54,20,.07)}
+.brand-lockup{gap:13px}
+.brand-logo{width:62px;height:62px;border-radius:18px;background:#fff;padding:4px;box-shadow:0 7px 20px rgba(110,55,19,.13)}
+.brand-copy b{font-size:clamp(14px,2vw,19px);letter-spacing:.015em;color:#8f3514}
+.brand-copy .muted{font-size:10px;font-weight:800;letter-spacing:.12em;color:#9a7359}
+.header-actions{gap:7px}
+.clock-chip{padding:8px 11px;border:1px solid #efd9c1;border-radius:13px;background:#fff}
+.clock-chip strong{color:#8f3514}
+.menu-toggle{background:#fff;border-color:#efd9c1}
+.menu-toggle span{background:#8f3514}
+main{max-width:1200px;padding-top:22px}
+#connection{border:1px solid #efd9c1;background:#fff;border-radius:14px;color:#80624d}
+#login{max-width:480px;margin:clamp(28px,8vh,90px) auto;background:#fff;border:1px solid #f0ddca;border-radius:26px;padding:clamp(22px,5vw,34px);box-shadow:0 22px 65px rgba(104,54,20,.11)}
+.login-brand{display:flex;align-items:center;gap:15px;margin-bottom:20px}
+.login-brand img{width:72px;height:72px;object-fit:contain;border-radius:20px;background:#fff4e6;padding:5px}
+.login-brand h2{font-size:24px;margin:3px 0;color:#8f3514}
+.login-brand p{font-size:13px;color:var(--muted);margin:0}
+.eyebrow{font-size:10px;font-weight:850;letter-spacing:.15em;color:#bd4e1c}
+.tab.panel{background:#fff;border:1px solid #f0ddca;border-radius:23px;box-shadow:0 12px 36px rgba(104,54,20,.065);padding:clamp(17px,3vw,30px)}
+.tab h2{font-size:clamp(20px,2.5vw,26px);color:#713018;letter-spacing:-.025em}
+.tab h3{color:#713018}
+.hint{background:#fff8ef;border:1px solid #f1dfca;color:#876b55}
+input,select,textarea{background:#fff;color:#382014;border-color:#ead7c3}
+input::placeholder,textarea::placeholder{color:#b39a86}
+button{background:linear-gradient(135deg,#c95820,#a83e16);color:#fff;border-radius:13px;box-shadow:0 6px 15px rgba(189,78,28,.17)}
+button.secondary{background:#fff;color:#8f3514;border:1px solid #edcfb2;box-shadow:none}
+button.danger{background:#b9382d;color:#fff}
+.tabs{background:#fff!important;border-right:1px solid #efd9c1;box-shadow:18px 0 45px rgba(82,39,14,.14)}
+.tabs button{color:#64432f}
+.tabs button:hover{background:#fff0df}
+#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(2),
+#app:has(#incoming:not(.hidden)) .tabs button:nth-child(3),
+#app:has(#production:not(.hidden)) .tabs button:nth-child(4),
+#app:has(#report:not(.hidden)) .tabs button:nth-child(5),
+#app:has(#history:not(.hidden)) .tabs button:nth-child(6),
+#app:has(#manual:not(.hidden)) .tabs button:nth-child(7){background:#bd4e1c;color:#fff;border-color:#bd4e1c}
+#stockGrid>.panel{background:linear-gradient(145deg,#fff4e5,#ffe2bc);border:1px solid #f0d0a8;border-radius:19px}
+#stockGrid .qty{color:#8f3514}
+.history-card,.outlet-target-card,.variant-card{background:#fff;border-color:#efddca}
+.outlet-target-heading strong{color:#a94419;background:#fff0df}
+.production-total strong{color:#a94419}
+.app-footer{max-width:1200px;border-color:#efd9c1;color:#8c705b}
+.footer-brand{color:#8f3514;letter-spacing:.14em}
+.footer-logo{width:82px;height:82px;background:#fff;border-radius:22px;padding:5px}
+.nav-backdrop.visible{background:rgba(54,27,13,.42)}
+#alarm .alarm-box,#alarm .alarm-stat,#alarm .tone-row{background:#fff;border-color:#efddca}
+#alarm .tone-current{background:#fff2e5;border-color:#bd4e1c}
+@media(max-width:640px){
+ header{min-height:72px;padding:10px 12px}
+ .brand-logo{width:49px;height:49px;border-radius:14px}
+ .brand-copy b{font-size:13px}
+ .brand-copy .muted{font-size:9px;letter-spacing:.08em}
+ .clock-chip{display:none}
+ .login-brand img{width:60px;height:60px}
+}
+
 </style></head><body>
-<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>INSAN STOCK MANAGER</b><div class="muted">Inventaris & produksi</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
+<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
-<section id="login" class="panel"><h2>Masuk</h2><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
+<section id="login" class="panel"><div class="login-brand"><img src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
-<div class="row"><div><b id="who"></b><div class="muted">Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
-<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>INSAN Stock Manager</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
+<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
+<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
 <div id="alarm" class="tab panel hidden">
 <style>
 #alarm .alarm-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:14px;margin:12px 0}
@@ -327,7 +392,7 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 <div class="row"><button class="secondary" onclick="scheduleAlarmTest(1)">Tes 1 menit</button><button class="secondary" onclick="scheduleAlarmTest(2)">Tes 2 menit</button><button class="secondary" onclick="scheduleAlarmTest(3)">Tes 3 menit</button></div>
 <div class="row"><button class="danger" onclick="cancelAlarmTest()">Batalkan tes</button><button class="secondary" onclick="stopAlarmSound()">Hentikan bunyi</button></div><p class="alarm-note" id="alarmDebugStatus" aria-live="polite">Mode percobaan tidak aktif.</p>
 <p class="hint">Catatan: alarm browser tidak dijamin berbunyi jika browser ditutup atau Android menghentikan proses. Alarm Android yang andal memerlukan integrasi native.</p>
-</div><div id="dashboard" class="tab panel"><h2>Ringkasan persediaan</h2><p class="hint">Pantau stok yang tersedia. Status Aman berarti stok masih di atas batas minimum. Jika di bawah minimum, segera rencanakan pengadaan.</p><h2>Stok tersimpan</h2><div id="stockGrid" class="grid"></div><button class="secondary" onclick="refresh()">↻ Perbarui / sinkronkan</button></div>
+</div><div id="dashboard" class="tab panel"><span class="eyebrow">PUSAT KENDALI</span><h2>Ringkasan persediaan</h2><p class="hint">Pantau stok yang tersedia. Status Aman berarti stok masih di atas batas minimum. Jika di bawah minimum, segera rencanakan pengadaan.</p><h2>Stok tersimpan</h2><div id="stockGrid" class="grid"></div><button class="secondary" onclick="refresh()">↻ Perbarui / sinkronkan</button></div>
 <div id="incoming" class="tab panel hidden"><h2>Catat barang masuk</h2><p class="hint">Total barang dihitung otomatis: (jumlah pack × isi per pack) + tambahan pcs. Contoh: 2 pack × 100 pcs + 5 pcs = 205 pcs.</p><label>Barang</label><select id="inItem"><option value="box3">Box isi 3</option><option value="box5outer">Box isi 5 luar / Slongsong</option><option value="box5inner">Box isi 5 dalam / Tatakan polos</option><option value="paper">Kertas Minyak</option><option value="mika">Mika roti roll</option></select><div class="row"><div><label>Jumlah pack</label><input id="packs" type="number" min="0" value="0"></div><div><label>Isi per pack (pcs)</label><input id="perPack" type="number" min="0" value="0"></div><div><label>Tambahan pcs</label><input id="extra" type="number" min="0" value="0"></div></div><label>Catatan</label><input id="inNote" placeholder="Contoh: Paket datang pagi"><button onclick="stockIn()">Simpan barang datang</button><p id="inMsg" class="muted"></p></div>
 <div id="production" class="tab panel hidden"><h2>Catat target produksi</h2><p class="hint">Pilih outlet, lalu isi jumlah setiap varian. Total seluruh loyang dihitung otomatis dan ditampilkan sebelum target disimpan.</p><div class="row"><div><label>Tanggal</label><input id="prodDate" type="date"></div><div><label>Outlet / Toko</label><select id="location"><option value="">Pilih outlet</option><option value="Grand Wisata">Grand Wisata</option><option value="Bektim">Bektim</option><option value="Harapan Indah">Harapan Indah</option></select></div></div><h3 style="font-size:14px;margin:14px 0 6px">Ambil target yang sudah tersimpan (opsional)</h3><div class="row"><div><label>Target sumber</label><select id="targetSource"><option value="">Pilih target tanggal ini</option></select></div><div><button class="secondary" type="button" onclick="loadTargetForRequest()">Ambil & edit target</button></div></div><p id="editTargetMsg" class="muted">Pilih target untuk mengubah request tanpa membuat transaksi ganda.</p><h3 style="font-size:14px;margin:14px 0 6px">Jumlah loyang per varian</h3><div class="variant-grid"><div class="variant-card"><label for="ori">Ori</label><input id="ori" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="beef">Beef</label><input id="beef" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="spicy">Spicy</label><input id="spicy" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="cheese">Cheese</label><input id="cheese" type="number" min="0" step="1" value="0" inputmode="numeric"></div></div><h3 style="font-size:14px;margin:14px 0 6px">Pengaturan kemasan per varian</h3><p class="hint">Centang hanya varian yang kemasannya ingin diatur khusus. Varian yang tidak dicentang tetap memakai hitungan normal.</p><div class="variant-grid"><div class="variant-card"><label><input id="packCustomOri" type="checkbox" style="width:auto"> Kemasan khusus Ori</label><div id="packFieldsOri" class="hidden"><label>Box isi 5</label><input id="packBox5Ori" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Ori" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomBeef" type="checkbox" style="width:auto"> Kemasan khusus Beef</label><div id="packFieldsBeef" class="hidden"><label>Box isi 5</label><input id="packBox5Beef" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Beef" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomSpicy" type="checkbox" style="width:auto"> Kemasan khusus Spicy</label><div id="packFieldsSpicy" class="hidden"><label>Box isi 5</label><input id="packBox5Spicy" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Spicy" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomCheese" type="checkbox" style="width:auto"> Kemasan khusus Cheese</label><div id="packFieldsCheese" class="hidden"><label>Box isi 5</label><input id="packBox5Cheese" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Cheese" type="number" min="0" step="1" value="0"></div></div></div><small>Setiap varian memiliki jumlah kemasan sendiri. Kertas minyak dan kedua jenis Box isi 5 otomatis mengikuti jumlah Box isi 5.</small><div id="requestNoteWrap"><label>Catatan request kemasan (opsional)</label><textarea id="requestNote" rows="2" placeholder="Contoh: Beef memakai kemasan campuran, Ori normal"></textarea></div><label>Catatan tambahan (opsional)</label><input id="prodNote" placeholder="Contoh: nomor pesanan pelanggan"><div id="productionPreview" class="hint">Isi jumlah loyang untuk melihat perkiraan pengurangan stok.</div><button id="prodSubmit" onclick="production()">Tambah target outlet</button><p id="prodMsg" class="muted"></p><h2 style="margin-top:18px">Rekap target harian</h2><p class="hint">Setiap outlet menampilkan jumlah per varian sekaligus total seluruh loyang dari semua input pada tanggal tersebut.</p><div id="targetDailyReport" class="history-card">Belum ada target untuk tanggal ini.</div></div>
 <div id="report" class="tab panel hidden"><h2>Tempel Stock Opname Harian</h2><p class="hint">Tempel seluruh pesan stock opname dari grup kerja. Aplikasi akan mengganti hanya bagian *INSAN* dengan stok terbaru dari database, sementara bagian rekan kerja dan catatan lain tetap dipertahankan.</p><label for="stockOpnameInput">Pesan stock opname lengkap</label><textarea id="stockOpnameInput" placeholder="Tempel pesan stock opname lengkap di sini..."></textarea><button onclick="generateFullStockReport()">Perbarui bagian INSAN otomatis</button><p id="stockOpnameMsg" class="muted"></p><label for="reportText">Hasil stock opname</label><textarea id="reportText" readonly placeholder="Hasil laporan akan muncul di sini..."></textarea><button onclick="copyReport()">Salin hasil lengkap</button><button class="secondary" onclick="loadReport()">Buat laporan INSAN saja</button></div>
@@ -366,4 +431,4 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 <p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
 <button class="secondary" onclick="loadAbout()">↻ Muat ulang informasi versi</button>
 </div>
-</section></main><footer class="app-footer"><img class="footer-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">INSAN STOCK MANAGER</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">Sistem pencatatan stok dan produksi · Offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
+</section></main><footer class="app-footer"><img class="footer-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
